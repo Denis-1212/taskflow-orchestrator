@@ -20,4 +20,8 @@
     <Project Path="src/Shared/TaskFlow.Shared.Resilience/TaskFlow.Shared.Resilience.csproj" />
     <Project Path="src\Shared\TaskFlow.Shared.Messaging.RabbitMQ\TaskFlow.Shared.Messaging.RabbitMQ.csproj" />
   </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Unit/">
+    <Project Path="tests/Unit/TaskFlow.Services.Auth.Tests/TaskFlow.Services.Auth.Tests.csproj" />
+  </Folder>
 </Solution>
