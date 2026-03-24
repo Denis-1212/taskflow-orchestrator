@@ -1,0 +1,204 @@
+networks:
+  taskflow-network:
+    driver: bridge
+
+services:
+  # PostgreSQL Databases
+  auth-db:
+    image: postgres:15-alpine
+    container_name: taskflow-auth-db
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow123
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    networks:
+      - taskflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow -d auth_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  project-db:
+    image: postgres:15-alpine
+    container_name: taskflow-project-db
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow123
+      POSTGRES_DB: project_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - project-db-data:/var/lib/postgresql/data
+    networks:
+      - taskflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow -d project_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  task-db:
+    image: postgres:15-alpine
+    container_name: taskflow-task-db
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow123
+      POSTGRES_DB: task_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - task-db-data:/var/lib/postgresql/data
+    networks:
+      - taskflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow -d task_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  notification-db:
+    image: postgres:15-alpine
+    container_name: taskflow-notification-db
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow123
+      POSTGRES_DB: notification_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+    networks:
+      - taskflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow -d notification_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  audit-db:
+    image: postgres:15-alpine
+    container_name: taskflow-audit-db
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow123
+      POSTGRES_DB: audit_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - audit-db-data:/var/lib/postgresql/data
+    networks:
+      - taskflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow -d audit_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: taskflow-redis
+    command: redis-server --appendonly yes --requirepass taskflow123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - taskflow-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: taskflow-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: taskflow
+      RABBITMQ_DEFAULT_PASS: taskflow123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - taskflow-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Observability Stack
+  seq:
+    image: datalust/seq:latest
+    container_name: taskflow-seq
+    environment:
+      ACCEPT_EULA: Y
+    ports:
+      - "5341:80"
+    volumes:
+      - seq-data:/data
+    networks:
+      - taskflow-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: taskflow-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - taskflow-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: taskflow-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deployments/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - taskflow-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: taskflow-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./deployments/monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    networks:
+      - taskflow-network
+    depends_on:
+      - prometheus
+
+volumes:
+  auth-db-data:
+  project-db-data:
+  task-db-data:
+  notification-db-data:
+  audit-db-data:
+  redis-data:
+  rabbitmq-data:
+  seq-data:
+  prometheus-data:
+  grafana-data:

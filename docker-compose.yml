@@ -1,0 +1,180 @@
+networks:
+  taskflow-network:
+    driver: bridge
+
+services:
+  # ==================== Infrastructure ====================
+  auth-db:
+    extends:
+      file: docker-compose.infrastructure.yml
+      service: auth-db
+
+  project-db:
+    extends:
+      file: docker-compose.infrastructure.yml
+      service: project-db
+
+  task-db:
+    extends:
+      file: docker-compose.infrastructure.yml
+      service: task-db
+
+  notification-db:
+    extends:
+      file: docker-compose.infrastructure.yml
+      service: notification-db
+
+  audit-db:
+    extends:
+      file: docker-compose.infrastructure.yml
+      service: audit-db
+
+  redis:
+    extends:
+      file: docker-compose.infrastructure.yml
+      service: redis
+
+  rabbitmq:
+    extends:
+      file: docker-compose.infrastructure.yml
+      service: rabbitmq
+
+  seq:
+    extends:
+      file: docker-compose.infrastructure.yml
+      service: seq
+
+  jaeger:
+    extends:
+      file: docker-compose.infrastructure.yml
+      service: jaeger
+
+  prometheus:
+    extends:
+      file: docker-compose.infrastructure.yml
+      service: prometheus
+
+  grafana:
+    extends:
+      file: docker-compose.infrastructure.yml
+      service: grafana
+
+  # ==================== Services ====================
+  auth-service:
+    build:
+      context: .
+      dockerfile: src/Services/TaskFlow.Services.Auth/Dockerfile
+    container_name: taskflow-auth-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5001:8080"
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - taskflow-network
+
+  project-service:
+    build:
+      context: .
+      dockerfile: src/Services/TaskFlow.Services.Project/Dockerfile
+    container_name: taskflow-project-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5002:8080"
+    depends_on:
+      project-db:
+        condition: service_healthy
+    networks:
+      - taskflow-network
+
+  task-service:
+    build:
+      context: .
+      dockerfile: src/Services/TaskFlow.Services.Task/Dockerfile
+    container_name: taskflow-task-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5003:8080"
+    depends_on:
+      task-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - taskflow-network
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: src/Services/TaskFlow.Services.Notification/Dockerfile
+    container_name: taskflow-notification-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5004:8080"
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - taskflow-network
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: src/Services/TaskFlow.Services.Audit/Dockerfile
+    container_name: taskflow-audit-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5005:8080"
+    depends_on:
+      audit-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - taskflow-network
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: src/ApiGateway/TaskFlow.ApiGateway/Dockerfile
+    container_name: taskflow-api-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      - project-service
+      - task-service
+      - notification-service
+      - audit-service
+    networks:
+      - taskflow-network
+
+volumes:
+  auth-db-data:
+  project-db-data:
+  task-db-data:
+  notification-db-data:
+  audit-db-data:
+  redis-data:
+  rabbitmq-data:
+  seq-data:
+  prometheus-data:
+  grafana-data:

@@ -1,0 +1,23 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/ApiGateway/">
+    <Project Path="src/ApiGateway/TaskFlow.ApiGateway/TaskFlow.ApiGateway.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/">
+    <Project Path="src/Services/TaskFlow.Services.Audit/TaskFlow.Services.Audit.csproj" />
+    <Project Path="src/Services/TaskFlow.Services.Auth/TaskFlow.Services.Auth.csproj" />
+    <Project Path="src/Services/TaskFlow.Services.Notification/TaskFlow.Services.Notification.csproj" />
+    <Project Path="src/Services/TaskFlow.Services.Project/TaskFlow.Services.Project.csproj" />
+    <Project Path="src/Services/TaskFlow.Services.Task/TaskFlow.Services.Task.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/TaskFlow.Shared.Abstractions/TaskFlow.Shared.Abstractions.csproj" />
+    <Project Path="src/Shared/TaskFlow.Shared.DTOs/TaskFlow.Shared.DTOs.csproj" />
+    <Project Path="src/Shared/TaskFlow.Shared.Grpc/TaskFlow.Shared.Grpc.csproj" />
+    <Project Path="src/Shared/TaskFlow.Shared.Kernel/TaskFlow.Shared.Kernel.csproj" />
+    <Project Path="src/Shared/TaskFlow.Shared.Messaging/TaskFlow.Shared.Messaging.csproj" />
+    <Project Path="src/Shared/TaskFlow.Shared.Observability/TaskFlow.Shared.Observability.csproj" />
+    <Project Path="src/Shared/TaskFlow.Shared.Resilience/TaskFlow.Shared.Resilience.csproj" />
+    <Project Path="src\Shared\TaskFlow.Shared.Messaging.RabbitMQ\TaskFlow.Shared.Messaging.RabbitMQ.csproj" />
+  </Folder>
+</Solution>

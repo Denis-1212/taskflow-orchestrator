@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package project;
+
+service ProjectService {
+    rpc GetProject (GetProjectRequest) returns (GetProjectResponse);
+    rpc ProjectExists (ProjectExistsRequest) returns (ProjectExistsResponse);
+    rpc ValidateMember (ValidateMemberRequest) returns (ValidateMemberResponse);
+    rpc GetUserProjects (GetUserProjectsRequest) returns (GetUserProjectsResponse);
+}
+
+message GetProjectRequest {
+    string project_id = 1;
+}
+
+message GetProjectResponse {
+    string project_id = 1;
+    string name = 2;
+    string description = 3;
+    string owner_id = 4;
+    bool is_deleted = 5;
+}
+
+message ProjectExistsRequest {
+    string project_id = 1;
+}
+
+message ProjectExistsResponse {
+    bool exists = 1;
+}
+
+message ValidateMemberRequest {
+    string project_id = 1;
+    string user_id = 2;
+}
+
+message ValidateMemberResponse {
+    bool is_member = 1;
+    string role = 2;
+}
+
+message GetUserProjectsRequest {
+    string user_id = 1;
+}
+
+message GetUserProjectsResponse {
+    repeated UserProject projects = 1;
+}
+
+message UserProject {
+    string project_id = 1;
+    string name = 2;
+    string role = 3;
+}

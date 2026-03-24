@@ -1,0 +1,6 @@
+@TaskFlow.Services.Notification_HostAddress = http://localhost:5179
+
+GET {{TaskFlow.Services.Notification_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

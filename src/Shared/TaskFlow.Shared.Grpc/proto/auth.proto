@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package auth;
+
+service AuthService {
+    rpc GetUser (GetUserRequest) returns (GetUserResponse);
+    rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+    rpc GetUserRoles (GetUserRolesRequest) returns (GetUserRolesResponse);
+    rpc CheckUserExists (CheckUserExistsRequest) returns (CheckUserExistsResponse);
+}
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUserResponse {
+    string user_id = 1;
+    string email = 2;
+    string full_name = 3;
+    bool is_active = 4;
+    repeated string roles = 5;
+}
+
+message ValidateTokenRequest {
+    string token = 1;
+}
+
+message ValidateTokenResponse {
+    bool is_valid = 1;
+    string user_id = 2;
+    string email = 3;
+}
+
+message GetUserRolesRequest {
+    string user_id = 1;
+}
+
+message GetUserRolesResponse {
+    repeated string roles = 1;
+}
+
+message CheckUserExistsRequest {
+    string user_id = 1;
+}
+
+message CheckUserExistsResponse {
+    bool exists = 1;
+}

@@ -1,0 +1,38 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+.idea/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+
+# Environment files
+.env
+.env.local
+
+# Secrets
+**/appsettings.Secrets.json
+**/appsettings.Development.json
+
+# Test results
+TestResults/
+
+# EF Core
+**/Migrations/*.Designer.cs
+!**/Migrations/*.Designer.cs
+
+# Docker volumes
+*-data/
+prometheus-data/
+grafana-data/
+
+# OS
+.DS_Store
+Thumbs.db
