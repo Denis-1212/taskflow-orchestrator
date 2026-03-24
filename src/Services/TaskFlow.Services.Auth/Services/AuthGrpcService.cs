@@ -4,29 +4,14 @@ using global::Auth;
 
 using Grpc.Core;
 
-public class AuthGrpcService : AuthService.AuthServiceBase
+public class AuthGrpcService(ILogger<AuthGrpcService> logger) : AuthService.AuthServiceBase
 {
-
-    #region Fields
-
-    private readonly ILogger<AuthGrpcService> _logger;
-
-    #endregion
-
-    #region Constructors
-
-    public AuthGrpcService(ILogger<AuthGrpcService> logger)
-    {
-        _logger = logger;
-    }
-
-    #endregion
 
     #region Methods
 
     public override Task<GetUserResponse> GetUser(GetUserRequest request, ServerCallContext context)
     {
-        _logger.LogInformation("GetUser called with UserId: {UserId}", request.UserId);
+        logger.LogInformation("GetUser called with UserId: {UserId}", request.UserId);
 
         var response = new GetUserResponse
         {
@@ -41,7 +26,7 @@ public class AuthGrpcService : AuthService.AuthServiceBase
 
     public override Task<ValidateTokenResponse> ValidateToken(ValidateTokenRequest request, ServerCallContext context)
     {
-        _logger.LogInformation("ValidateToken called");
+        logger.LogInformation("ValidateToken called");
 
         var response = new ValidateTokenResponse
         {
@@ -55,7 +40,7 @@ public class AuthGrpcService : AuthService.AuthServiceBase
 
     public override Task<GetUserRolesResponse> GetUserRoles(GetUserRolesRequest request, ServerCallContext context)
     {
-        _logger.LogInformation("GetUserRoles called for UserId: {UserId}", request.UserId);
+        logger.LogInformation("GetUserRoles called for UserId: {UserId}", request.UserId);
 
         var response = new GetUserRolesResponse();
         response.Roles.Add("User");
@@ -65,7 +50,7 @@ public class AuthGrpcService : AuthService.AuthServiceBase
 
     public override Task<CheckUserExistsResponse> CheckUserExists(CheckUserExistsRequest request, ServerCallContext context)
     {
-        _logger.LogInformation("CheckUserExists called for UserId: {UserId}", request.UserId);
+        logger.LogInformation("CheckUserExists called for UserId: {UserId}", request.UserId);
 
         var response = new CheckUserExistsResponse
         {

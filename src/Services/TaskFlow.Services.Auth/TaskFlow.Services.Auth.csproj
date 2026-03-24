@@ -8,14 +8,28 @@
 
     <ItemGroup>
         <PackageReference Include="Grpc.AspNetCore" Version="2.63.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4"/>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.4"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4"/>
         <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.5"/>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.5"/>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.5"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.1.2"/>
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\Shared\TaskFlow.Shared.DTOs\TaskFlow.Shared.DTOs.csproj"/>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Grpc\TaskFlow.Shared.Grpc.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Application\Commands\"/>
+        <Folder Include="Application\Queries\"/>
     </ItemGroup>
 
 </Project>
