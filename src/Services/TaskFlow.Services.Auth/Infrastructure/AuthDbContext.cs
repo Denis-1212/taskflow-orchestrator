@@ -25,7 +25,7 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
             entity.Property(e => e.Email).IsRequired().HasMaxLength(256);
             entity.Property(e => e.PasswordHash).IsRequired();
             entity.Property(e => e.FullName).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Roles).HasColumnType("jsonb");
+            entity.Property(e => e.Roles);
         });
 
         modelBuilder.Entity<RefreshToken>(entity =>

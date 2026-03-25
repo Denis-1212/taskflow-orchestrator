@@ -1,3 +1,7 @@
+using Microsoft.EntityFrameworkCore;
+
+using TaskFlow.Services.Project.Application.Services;
+using TaskFlow.Services.Project.Infrastructure;
 using TaskFlow.Services.Project.Services;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -7,6 +11,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
+
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddDbContext<ProjectDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add gRPC
 builder.Services.AddGrpc();
