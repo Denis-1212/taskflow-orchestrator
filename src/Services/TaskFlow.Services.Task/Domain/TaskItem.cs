@@ -17,7 +17,7 @@ public class TaskItem
     public Guid ProjectId { get; private set; }
     public string Title { get; private set; }
     public string Description { get; private set; }
-    public TaskStatus Status { get; private set; }
+    public TaskItemStatus Status { get; private set; }
     public TaskPriority Priority { get; private set; }
     public Guid? AssigneeId { get; private set; }
     public Guid CreatedBy { get; private set; }
@@ -44,7 +44,7 @@ public class TaskItem
         ProjectId = projectId;
         Title = title;
         Description = description;
-        Status = TaskStatus.Todo;
+        Status = TaskItemStatus.Todo;
         Priority = priority;
         AssigneeId = assigneeId;
         CreatedBy = createdBy;
@@ -52,7 +52,7 @@ public class TaskItem
         CreatedAt = DateTime.UtcNow;
         IsDeleted = false;
 
-        _statusHistory.Add(new TaskStatusHistory(Id, TaskStatus.Todo, TaskStatus.Todo, createdBy, "Task created"));
+        _statusHistory.Add(new TaskStatusHistory(Id, TaskItemStatus.Todo, TaskItemStatus.Todo, createdBy, "Task created"));
     }
 
     private TaskItem()
@@ -98,14 +98,14 @@ public class TaskItem
         return Result.Success();
     }
 
-    public Result ChangeStatus(TaskStatus newStatus, Guid changedBy, string? comment = null)
+    public Result ChangeStatus(TaskItemStatus newStatus, Guid changedBy, string? comment = null)
     {
         if (Status == newStatus)
         {
             return Result.Success();
         }
 
-        TaskStatus oldStatus = Status;
+        TaskItemStatus oldStatus = Status;
         Status = newStatus;
         UpdatedAt = DateTime.UtcNow;
 

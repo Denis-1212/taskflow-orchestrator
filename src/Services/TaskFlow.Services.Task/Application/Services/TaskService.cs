@@ -192,7 +192,7 @@ public class TaskService(
             query = query.Where(t => t.ProjectId == projectId.Value);
         }
 
-        if (!string.IsNullOrEmpty(status) && Enum.TryParse(status, true, out TaskStatus taskStatus))
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse(status, true, out TaskItemStatus taskStatus))
         {
             query = query.Where(t => t.Status == taskStatus);
         }
@@ -272,7 +272,7 @@ public class TaskService(
             status,
             changedBy);
 
-        if (!Enum.TryParse(status, true, out TaskStatus newStatus))
+        if (!Enum.TryParse(status, true, out TaskItemStatus newStatus))
         {
             return Result.Failure<TaskResult>(Error.Validation($"Invalid status: {status}"));
         }
@@ -335,10 +335,10 @@ public class TaskService(
 
         var statistics = new TaskStatisticsResult(
             tasks.Count,
-            tasks.Count(t => t.Status == TaskStatus.Todo),
-            tasks.Count(t => t.Status == TaskStatus.InProgress),
-            tasks.Count(t => t.Status == TaskStatus.Completed),
-            tasks.Count(t => t.Status == TaskStatus.Cancelled));
+            tasks.Count(t => t.Status == TaskItemStatus.Todo),
+            tasks.Count(t => t.Status == TaskItemStatus.InProgress),
+            tasks.Count(t => t.Status == TaskItemStatus.Completed),
+            tasks.Count(t => t.Status == TaskItemStatus.Cancelled));
 
         return statistics;
     }

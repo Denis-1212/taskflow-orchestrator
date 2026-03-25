@@ -1,6 +1,6 @@
 namespace TaskFlow.Services.Task.Domain;
 
-public enum TaskStatus
+public enum TaskItemStatus
 {
     Todo = 0,
     InProgress = 1,

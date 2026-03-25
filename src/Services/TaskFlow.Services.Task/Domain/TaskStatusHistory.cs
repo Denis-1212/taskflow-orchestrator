@@ -7,8 +7,8 @@ public class TaskStatusHistory
 
     public Guid Id { get; private set; }
     public Guid TaskId { get; private set; }
-    public TaskStatus OldStatus { get; private set; }
-    public TaskStatus NewStatus { get; private set; }
+    public TaskItemStatus OldStatus { get; private set; }
+    public TaskItemStatus NewStatus { get; private set; }
     public Guid ChangedBy { get; private set; }
     public DateTime ChangedAt { get; private set; }
     public string Comment { get; private set; }
@@ -17,7 +17,7 @@ public class TaskStatusHistory
 
     #region Constructors
 
-    public TaskStatusHistory(Guid taskId, TaskStatus oldStatus, TaskStatus newStatus, Guid changedBy, string comment)
+    public TaskStatusHistory(Guid taskId, TaskItemStatus oldStatus, TaskItemStatus newStatus, Guid changedBy, string comment)
     {
         Id = Guid.NewGuid();
         TaskId = taskId;

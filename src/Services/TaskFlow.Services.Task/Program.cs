@@ -1,4 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
+using TaskFlow.Services.Task.Application.Services;
 using TaskFlow.Services.Task.Clients;
+using TaskFlow.Services.Task.Infrastructure;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -9,8 +13,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 
 // Register gRPC clients
+builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAuthGrpcClient, AuthGrpcClient>();
 builder.Services.AddScoped<IProjectGrpcClient, ProjectGrpcClient>();
+builder.Services.AddDbContext<TaskDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 WebApplication app = builder.Build();
 

@@ -59,7 +59,8 @@ public class TaskDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.EventType).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.EventData).IsRequired().HasColumnType("jsonb");
+            entity.Property(e => e.EventData).IsRequired();
+            entity.Property(e => e.EventData);
             entity.HasIndex(e => e.ProcessedAt);
             entity.HasIndex(e => e.CreatedAt);
         });
