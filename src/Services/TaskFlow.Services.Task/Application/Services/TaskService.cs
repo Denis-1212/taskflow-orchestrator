@@ -60,7 +60,6 @@ public class TaskService(
         var task = new TaskItem(projectId, title, description, taskPriority, assigneeId, createdBy, dueDate);
 
         context.Tasks.Add(task);
-        await context.SaveChangesAsync();
 
         // Save outbox message
         var taskCreatedEvent = new TaskCreatedEvent

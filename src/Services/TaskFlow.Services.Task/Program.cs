@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskFlow.Services.Task.Application.Services;
 using TaskFlow.Services.Task.Clients;
 using TaskFlow.Services.Task.Infrastructure;
+using TaskFlow.Services.Task.Services;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,8 @@ builder.Services.AddScoped<IAuthGrpcClient, AuthGrpcClient>();
 builder.Services.AddScoped<IProjectGrpcClient, ProjectGrpcClient>();
 builder.Services.AddDbContext<TaskDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHostedService<OutboxProcessorService>();
 
 WebApplication app = builder.Build();
 
