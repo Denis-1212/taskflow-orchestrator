@@ -8,8 +8,27 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0"/>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.5"/>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.5"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="Microsoft.EntityFrameworkCore">
+            <HintPath>..\..\..\..\..\.nuget\packages\microsoft.entityframeworkcore\10.0.5\lib\net10.0\Microsoft.EntityFrameworkCore.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Shared\TaskFlow.Shared.DTOs\TaskFlow.Shared.DTOs.csproj"/>
+        <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Kernel\TaskFlow.Shared.Kernel.csproj"/>
+        <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Messaging.RabbitMQ\TaskFlow.Shared.Messaging.RabbitMQ.csproj"/>
+        <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Messaging\TaskFlow.Shared.Messaging.csproj"/>
     </ItemGroup>
 
 </Project>
