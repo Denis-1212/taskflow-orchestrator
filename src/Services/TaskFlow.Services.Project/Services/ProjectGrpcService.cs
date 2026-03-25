@@ -1,22 +1,30 @@
 namespace TaskFlow.Services.Project.Services;
 
+using Application.Services;
+
 using global::Project;
 
 using Grpc.Core;
+
+using Shared.Kernel;
+
+using ProjectService = global::Project.ProjectService;
 
 public class ProjectGrpcService : ProjectService.ProjectServiceBase
 {
 
     #region Fields
 
+    private readonly IProjectService _projectService;
     private readonly ILogger<ProjectGrpcService> _logger;
 
     #endregion
 
     #region Constructors
 
-    public ProjectGrpcService(ILogger<ProjectGrpcService> logger)
+    public ProjectGrpcService(IProjectService projectService, ILogger<ProjectGrpcService> logger)
     {
+        _projectService = projectService;
         _logger = logger;
     }
 
@@ -24,68 +32,115 @@ public class ProjectGrpcService : ProjectService.ProjectServiceBase
 
     #region Methods
 
-    public override Task<GetProjectResponse> GetProject(GetProjectRequest request, ServerCallContext context)
+    public override async Task<GetProjectResponse> GetProject(GetProjectRequest request, ServerCallContext context)
     {
-        _logger.LogInformation("GetProject called with ProjectId: {ProjectId}", request.ProjectId);
+        _logger.LogInformation("gRPC GetProject called for ProjectId: {ProjectId}", request.ProjectId);
 
-        var response = new GetProjectResponse
+        if (!Guid.TryParse(request.ProjectId, out Guid projectId))
         {
-            ProjectId = request.ProjectId,
-            Name = "Test Project",
-            Description = "Test Description",
-            OwnerId = Guid.NewGuid().ToString(),
-            IsDeleted = false
-        };
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid project ID format"));
+        }
 
-        return Task.FromResult(response);
+        Result<ProjectResult> result = await _projectService.GetProjectForGrpcAsync(projectId);
+
+        if (result.IsFailure)
+        {
+            throw new RpcException(new Status(StatusCode.NotFound, result.Error!.Message));
+        }
+
+        return new GetProjectResponse
+        {
+            ProjectId = result.Value.Id.ToString(),
+            Name = result.Value.Name,
+            Description = result.Value.Description,
+            OwnerId = result.Value.OwnerId.ToString(),
+            IsDeleted = result.Value.IsDeleted
+        };
     }
 
-    public override Task<ProjectExistsResponse> ProjectExists(ProjectExistsRequest request, ServerCallContext context)
+    public override async Task<ProjectExistsResponse> ProjectExists(ProjectExistsRequest request, ServerCallContext context)
     {
-        _logger.LogInformation("ProjectExists called for ProjectId: {ProjectId}", request.ProjectId);
+        _logger.LogInformation("gRPC ProjectExists called for ProjectId: {ProjectId}", request.ProjectId);
 
-
-        var response = new ProjectExistsResponse
+        if (!Guid.TryParse(request.ProjectId, out Guid projectId))
         {
-            Exists = true
-        };
+            return new ProjectExistsResponse
+            {
+                Exists = false
+            };
+        }
 
-        return Task.FromResult(response);
+        Result<bool> result = await _projectService.ProjectExistsAsync(projectId);
+
+        return new ProjectExistsResponse
+        {
+            Exists = result.IsSuccess && result.Value
+        };
     }
 
-    public override Task<ValidateMemberResponse> ValidateMember(ValidateMemberRequest request, ServerCallContext context)
+    public override async Task<ValidateMemberResponse> ValidateMember(ValidateMemberRequest request, ServerCallContext context)
     {
         _logger.LogInformation(
-            "ValidateMember called for ProjectId: {ProjectId}, UserId: {UserId}",
+            "gRPC ValidateMember called for ProjectId: {ProjectId}, UserId: {UserId}",
             request.ProjectId,
             request.UserId);
 
-        
-        var response = new ValidateMemberResponse
+        if (!Guid.TryParse(request.ProjectId, out Guid projectId) ||
+            !Guid.TryParse(request.UserId, out Guid userId))
         {
-            IsMember = true,
-            Role = "Member"
-        };
+            return new ValidateMemberResponse
+            {
+                IsMember = false,
+                Role = string.Empty
+            };
+        }
 
-        return Task.FromResult(response);
+        Result<MemberValidationResult> result = await _projectService.ValidateMemberAsync(projectId, userId);
+
+        if (result.IsFailure)
+        {
+            return new ValidateMemberResponse
+            {
+                IsMember = false,
+                Role = string.Empty
+            };
+        }
+
+        return new ValidateMemberResponse
+        {
+            IsMember = result.Value.IsMember,
+            Role = result.Value.Role
+        };
     }
 
-    public override Task<GetUserProjectsResponse> GetUserProjects(GetUserProjectsRequest request, ServerCallContext context)
+    public override async Task<GetUserProjectsResponse> GetUserProjects(GetUserProjectsRequest request, ServerCallContext context)
     {
-        _logger.LogInformation("GetUserProjects called for UserId: {UserId}", request.UserId);
+        _logger.LogInformation("gRPC GetUserProjects called for UserId: {UserId}", request.UserId);
+
+        if (!Guid.TryParse(request.UserId, out Guid userId))
+        {
+            return new GetUserProjectsResponse();
+        }
+
+        Result<IEnumerable<ProjectResult>> result = await _projectService.GetUserProjectsAsync(userId);
 
         var response = new GetUserProjectsResponse();
 
-        var userProject = new UserProject
+        if (result.IsSuccess)
         {
-            ProjectId = Guid.NewGuid().ToString(),
-            Name = "Test Project",
-            Role = "Member"
-        };
+            foreach (ProjectResult project in result.Value)
+            {
+                response.Projects.Add(
+                    new UserProject
+                    {
+                        ProjectId = project.Id.ToString(),
+                        Name = project.Name,
+                        Role = "Member" // TODO: Get actual role
+                    });
+            }
+        }
 
-        response.Projects.Add(userProject);
-
-        return Task.FromResult(response);
+        return response;
     }
 
     #endregion
