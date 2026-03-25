@@ -21,6 +21,25 @@ public record TaskCreatedEvent : IEvent
 
 }
 
+public record TaskUpdatedEvent : IEvent
+{
+
+    #region Properties
+
+    public Guid EventId { get; init; } = Guid.NewGuid();
+    public DateTime OccurredAt { get; init; } = DateTime.UtcNow;
+
+    public required Guid TaskId { get; init; }
+    public required Guid ProjectId { get; init; }
+    public required string TaskTitle { get; init; }
+    public required string OldTitle { get; init; }
+    public required string NewTitle { get; init; }
+    public required Guid UpdatedBy { get; init; }
+
+    #endregion
+
+}
+
 public record TaskAssignedEvent : IEvent
 {
 
@@ -57,6 +76,23 @@ public record TaskStatusChangedEvent : IEvent
     public required string NewStatus { get; init; }
     public required Guid ChangedBy { get; init; }
     public required string ChangedByEmail { get; init; }
+
+    #endregion
+
+}
+
+public record TaskDeletedEvent : IEvent
+{
+
+    #region Properties
+
+    public Guid EventId { get; init; } = Guid.NewGuid();
+    public DateTime OccurredAt { get; init; } = DateTime.UtcNow;
+
+    public required Guid TaskId { get; init; }
+    public required string TaskTitle { get; init; }
+    public required Guid ProjectId { get; init; }
+    public required Guid DeletedBy { get; init; }
 
     #endregion
 

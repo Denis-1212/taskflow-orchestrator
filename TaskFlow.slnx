@@ -22,6 +22,7 @@
   </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/Unit/">
+    <Project Path="tests/Unit/TaskFlow.Services.Audit.Tests/TaskFlow.Services.Audit.Tests.csproj" />
     <Project Path="tests/Unit/TaskFlow.Services.Auth.Tests/TaskFlow.Services.Auth.Tests.csproj" />
     <Project Path="tests/Unit/TaskFlow.Services.Notification.Tests/TaskFlow.Services.Notification.Tests.csproj" />
     <Project Path="tests/Unit/TaskFlow.Services.Project.Tests/TaskFlow.Services.Project.Tests.csproj" />
