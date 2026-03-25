@@ -135,7 +135,7 @@ public class ProjectGrpcService : ProjectService.ProjectServiceBase
                     {
                         ProjectId = project.Id.ToString(),
                         Name = project.Name,
-                        Role = "Member" // TODO: Get actual role
+                        Role = "Member"
                     });
             }
         }
