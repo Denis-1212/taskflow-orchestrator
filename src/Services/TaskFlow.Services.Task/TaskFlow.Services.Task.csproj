@@ -15,7 +15,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4"/>
         <PackageReference Include="Polly" Version="8.6.6"/>
         <PackageReference Include="Polly.Extensions.Http" Version="3.0.0"/>
@@ -26,6 +26,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.DTOs\TaskFlow.Shared.DTOs.csproj"/>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Grpc\TaskFlow.Shared.Grpc.csproj"/>
+        <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Messaging.RabbitMQ\TaskFlow.Shared.Messaging.RabbitMQ.csproj"/>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Messaging\TaskFlow.Shared.Messaging.csproj"/>
     </ItemGroup>
 
