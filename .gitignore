@@ -36,6 +36,9 @@ grafana-data/
 # OS
 .DS_Store
 Thumbs.db
+**/node_modules/
+**/dist/
+**/build/
 
 #Front
 # Logs
