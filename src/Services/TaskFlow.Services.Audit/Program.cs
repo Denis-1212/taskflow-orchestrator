@@ -94,6 +94,24 @@ builder.Services.AddHostedService<RabbitMQConsumerHostedService>();
 
 WebApplication app = builder.Build();
 
+// Автоматическое применение миграций
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
+
+    try
+    {
+        app.Logger.LogInformation("Applying database migrations...");
+        dbContext.Database.Migrate();
+        app.Logger.LogInformation("Migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Failed to apply migrations");
+        throw; // хотим чтобы контейнер падал при ошибке
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

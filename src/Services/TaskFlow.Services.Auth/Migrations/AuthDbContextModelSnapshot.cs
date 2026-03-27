@@ -77,7 +77,7 @@ namespace TaskFlow.Services.Auth.Migrations
 
                     b.Property<List<string>>("Roles")
                         .IsRequired()
-                        .HasColumnType("jsonb");
+                        .HasColumnType("text[]");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

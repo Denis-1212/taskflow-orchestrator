@@ -13,7 +13,7 @@ using TaskFlow.Services.Auth.Infrastructure;
 namespace TaskFlow.Services.Auth.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20260324071933_InitialCreate")]
+    [Migration("20260327064143_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -80,7 +80,7 @@ namespace TaskFlow.Services.Auth.Migrations
 
                     b.Property<List<string>>("Roles")
                         .IsRequired()
-                        .HasColumnType("jsonb");
+                        .HasColumnType("text[]");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
