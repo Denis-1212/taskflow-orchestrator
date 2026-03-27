@@ -20,6 +20,7 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
     {
         modelBuilder.Entity<User>(entity =>
         {
+            entity.ToTable("Users");
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Email).IsUnique();
             entity.Property(e => e.Email).IsRequired().HasMaxLength(256);

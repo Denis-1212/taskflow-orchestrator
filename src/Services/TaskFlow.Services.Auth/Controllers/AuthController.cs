@@ -12,23 +12,8 @@ using Shared.Kernel;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController : ControllerBase
+public class AuthController(IAuthService authService) : ControllerBase
 {
-
-    #region Fields
-
-    private readonly IAuthService _authService;
-
-    #endregion
-
-    #region Constructors
-
-    public AuthController(IAuthService authService)
-    {
-        _authService = authService;
-    }
-
-    #endregion
 
     #region Methods
 
@@ -37,7 +22,7 @@ public class AuthController : ControllerBase
     {
         string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-        Result<AuthResult> result = await _authService.RegisterAsync(request.Email, request.Password, request.FullName, ipAddress);
+        Result<AuthResult> result = await authService.RegisterAsync(request.Email, request.Password, request.FullName, ipAddress);
 
         if (result.IsFailure)
         {
@@ -66,7 +51,7 @@ public class AuthController : ControllerBase
     {
         string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-        Result<AuthResult> result = await _authService.LoginAsync(request.Email, request.Password, ipAddress);
+        Result<AuthResult> result = await authService.LoginAsync(request.Email, request.Password, ipAddress);
 
         if (result.IsFailure)
         {
@@ -90,7 +75,7 @@ public class AuthController : ControllerBase
     {
         string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-        Result<AuthResult> result = await _authService.RefreshTokenAsync(refreshToken, ipAddress);
+        Result<AuthResult> result = await authService.RefreshTokenAsync(refreshToken, ipAddress);
 
         if (result.IsFailure)
         {
@@ -113,7 +98,7 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] string refreshToken)
     {
-        Result result = await _authService.LogoutAsync(refreshToken);
+        Result result = await authService.LogoutAsync(refreshToken);
 
         if (result.IsFailure)
         {
@@ -138,7 +123,7 @@ public class AuthController : ControllerBase
             return Unauthorized(Error.Unauthorized("Invalid token"));
         }
 
-        Result<UserResult> result = await _authService.GetCurrentUserAsync(userId);
+        Result<UserResult> result = await authService.GetCurrentUserAsync(userId);
 
         if (result.IsFailure)
         {
