@@ -66,8 +66,13 @@ services:
       dockerfile: src/Services/TaskFlow.Services.Auth/Dockerfile
     container_name: taskflow-auth-service
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Development  #  Production
       - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=auth-db;Port=5432;Database=auth_db;Username=taskflow;Password=${POSTGRES_PASSWORD}
+      - Jwt__Secret=${JWT_SECRET}
+      - Jwt__Issuer=TaskFlow
+      - Jwt__Audience=TaskFlow
+      - Redis__ConnectionString=redis:6379,password=${REDIS_PASSWORD}
     ports:
       - "5001:8080"
     depends_on:
@@ -84,8 +89,10 @@ services:
       dockerfile: src/Services/TaskFlow.Services.Project/Dockerfile
     container_name: taskflow-project-service
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=project-db;Port=5432;Database=project_db;Username=taskflow;Password=${POSTGRES_PASSWORD}
+      - Grpc__AuthService=http://auth-service:8080
     ports:
       - "5002:8080"
     depends_on:
@@ -100,8 +107,16 @@ services:
       dockerfile: src/Services/TaskFlow.Services.Task/Dockerfile
     container_name: taskflow-task-service
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=task-db;Port=5432;Database=task_db;Username=taskflow;Password=${POSTGRES_PASSWORD}
+      - Grpc__AuthService=http://auth-service:8080
+      - Grpc__ProjectService=http://project-service:8080
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=taskflow
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+      - RabbitMQ__VirtualHost=/
     ports:
       - "5003:8080"
     depends_on:
@@ -118,8 +133,14 @@ services:
       dockerfile: src/Services/TaskFlow.Services.Notification/Dockerfile
     container_name: taskflow-notification-service
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__NotificationDatabase=Host=notification-db;Port=5432;Database=notification_db;Username=taskflow;Password=${POSTGRES_PASSWORD}
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=taskflow
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+      - RabbitMQ__VirtualHost=/
     ports:
       - "5004:8080"
     depends_on:
@@ -136,8 +157,14 @@ services:
       dockerfile: src/Services/TaskFlow.Services.Audit/Dockerfile
     container_name: taskflow-audit-service
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__AuditDatabase=Host=audit-db;Port=5432;Database=audit_db;Username=taskflow;Password=${POSTGRES_PASSWORD}
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=taskflow
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+      - RabbitMQ__VirtualHost=/
     ports:
       - "5005:8080"
     depends_on:
@@ -154,8 +181,11 @@ services:
       dockerfile: src/ApiGateway/TaskFlow.ApiGateway/Dockerfile
     container_name: taskflow-api-gateway
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
+      - Jwt__Secret=${JWT_SECRET}
+      - Jwt__Issuer=TaskFlow
+      - Jwt__Audience=TaskFlow
     ports:
       - "8080:8080"
     depends_on:

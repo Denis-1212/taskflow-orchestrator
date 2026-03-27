@@ -1,9 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
-using RabbitMQ.Module.Deduplication;
-using RabbitMQ.Module.Extensions;
-
 using TaskFlow.Services.Audit.Application.Services;
+using TaskFlow.Services.Audit.Extentions;
 using TaskFlow.Services.Audit.Handlers;
 using TaskFlow.Services.Audit.Infrastructure;
 using TaskFlow.Services.Audit.Services;
@@ -21,23 +19,10 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddDbContext<AuditDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("AuditDatabase")));
 
-// RabbitMQ configuration
-IConfigurationSection rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
-string rabbitMqConnectionString =
-    $"amqp://{rabbitMqConfig["Username"]}:{rabbitMqConfig["Password"]}@{rabbitMqConfig["Host"]}:{rabbitMqConfig["Port"]}{rabbitMqConfig["VirtualHost"]}";
-
-builder.Services.AddRabbitMQModule(
-    options =>
-    {
-        options.ConnectionString = rabbitMqConnectionString;
-        options.DeliveryControl.MaxRetryAttempts = 3;
-        options.DeliveryControl.RetryBaseDelayMs = 1000;
-        options.DeliveryControl.EnableDeadLetter = true;
-        options.Deduplication.StoreType = DeduplicationStoreType.InMemory;
-    },
+builder.Services.AddRabbitMQModuleWithHandlers(
+    builder.Configuration,
     module =>
     {
-        // Task events
         module.AddConsumer<TaskCreatedEvent, TaskCreatedHandler>(c =>
         {
             c.QueueName = "audit.task-created";
@@ -62,7 +47,6 @@ builder.Services.AddRabbitMQModule(
             c.PrefetchCount = 10;
         });
 
-        // User events
         module.AddConsumer<UserRegisteredEvent, UserRegisteredHandler>(c =>
         {
             c.QueueName = "audit.user-registered";
@@ -71,7 +55,6 @@ builder.Services.AddRabbitMQModule(
             c.PrefetchCount = 10;
         });
 
-        // Project events
         module.AddConsumer<ProjectCreatedEvent, ProjectCreatedHandler>(c =>
         {
             c.QueueName = "audit.project-created";
@@ -87,9 +70,10 @@ builder.Services.AddRabbitMQModule(
             c.RoutingKey = "project.user.added";
             c.PrefetchCount = 10;
         });
+
+        _ = module.StartConsumersAsync();
     });
 
-// Add background service to start consumers
 builder.Services.AddHostedService<RabbitMQConsumerHostedService>();
 
 WebApplication app = builder.Build();

@@ -1,12 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 
-using RabbitMQ.Module.Deduplication;
-using RabbitMQ.Module.Extensions;
-
 using TaskFlow.Services.Notification.Application.Services;
+using TaskFlow.Services.Notification.Extentions;
 using TaskFlow.Services.Notification.Handlers;
 using TaskFlow.Services.Notification.Infrastructure;
-using TaskFlow.Services.Notification.Services;
 using TaskFlow.Shared.Messaging.Events;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -21,21 +18,8 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddDbContext<NotificationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// RabbitMQ connection
-IConfigurationSection rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
-string rabbitMqConnectionString =
-    $"amqp://{rabbitMqConfig["Username"]}:{rabbitMqConfig["Password"]}@{rabbitMqConfig["Host"]}:{rabbitMqConfig["Port"]}{rabbitMqConfig["VirtualHost"]}";
-
-// Add RabbitMQ module
-builder.Services.AddRabbitMQModule(
-    options =>
-    {
-        options.ConnectionString = rabbitMqConnectionString;
-        options.DeliveryControl.MaxRetryAttempts = 3;
-        options.DeliveryControl.RetryBaseDelayMs = 1000;
-        options.DeliveryControl.EnableDeadLetter = true;
-        options.Deduplication.StoreType = DeduplicationStoreType.InMemory;
-    },
+builder.Services.AddRabbitMQModuleWithHandlers(
+    builder.Configuration,
     module =>
     {
         module.AddConsumer<TaskCreatedEvent, TaskCreatedHandler>(c =>
@@ -61,11 +45,9 @@ builder.Services.AddRabbitMQModule(
             c.RoutingKey = "task.status.changed";
             c.PrefetchCount = 10;
         });
-    });
 
-// Add background service to start consumers
-builder.Services.AddHostedService<RabbitMQConsumerHostedService>();
-builder.Services.AddControllers();
+        _ = module.StartConsumersAsync();
+    });
 
 WebApplication app = builder.Build();
 
