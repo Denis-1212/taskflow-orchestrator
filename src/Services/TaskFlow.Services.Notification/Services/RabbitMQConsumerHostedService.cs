@@ -2,6 +2,8 @@ namespace TaskFlow.Services.Notification.Services;
 
 using RabbitMQ.Module;
 
+using Task = System.Threading.Tasks.Task;
+
 public class RabbitMQConsumerHostedService : BackgroundService
 {
 

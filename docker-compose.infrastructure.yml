@@ -138,7 +138,7 @@ services:
 
   # Observability Stack
   seq:
-    image: datalust/seq:latest
+    image: datalust/seq:2024.3
     container_name: taskflow-seq
     environment:
       ACCEPT_EULA: Y

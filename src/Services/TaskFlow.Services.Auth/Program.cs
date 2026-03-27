@@ -4,13 +4,25 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
+using OpenTelemetry.Metrics;
+
+using Serilog;
+
 using TaskFlow.Services.Auth.Application.Services;
 using TaskFlow.Services.Auth.Infrastructure;
 using TaskFlow.Services.Auth.Services;
 
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.WithProperty("Service", "AuthService")
+    .WriteTo.Console()
+    .WriteTo.Seq("http://seq:5341")
+    .CreateLogger();
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services
+builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -48,6 +60,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddAuthorization();
+
+// OpenTelemetry metrics
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddPrometheusExporter(options =>
+        {
+            options.ScrapeResponseCacheDurationMilliseconds = 0;
+        }));
+
 // Add gRPC
 
 builder.Services.AddGrpc();
@@ -83,6 +106,38 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready");
+app.MapPrometheusScrapingEndpoint();
+app.Use(async (context, next) =>
+{
+    Stream originalBody = context.Response.Body;
+    using var memoryStream = new MemoryStream();
+    context.Response.Body = memoryStream;
+
+    await next();
+
+    if (context.Request.Path == "/metrics")
+    {
+        memoryStream.Position = 0;
+        string responseText = await new StreamReader(memoryStream).ReadToEndAsync();
+
+        // Remove lines starting with "# UNIT"
+        string[] filteredLines = responseText.Split('\n')
+            .Where(line => !line.StartsWith("# UNIT"))
+            .ToArray();
+
+        string newResponseText = string.Join("\n", filteredLines);
+
+        context.Response.Body = originalBody;
+        byte[] bytes = Encoding.UTF8.GetBytes(newResponseText);
+        await context.Response.Body.WriteAsync(bytes);
+    }
+    else
+    {
+        memoryStream.Position = 0;
+        await memoryStream.CopyToAsync(originalBody);
+        context.Response.Body = originalBody;
+    }
+});
 
 app.MapGrpcService<AuthGrpcService>();
 

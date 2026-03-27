@@ -33,10 +33,7 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        foreach (string role in user.Roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
+        claims.AddRange(user.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
         var token = new JwtSecurityToken(
             configuration["Jwt:Issuer"],

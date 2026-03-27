@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using TaskFlow.Services.Task.Application.Services;
 using TaskFlow.Services.Task.Clients;
+using TaskFlow.Services.Task.Extensions;
 using TaskFlow.Services.Task.Infrastructure;
 using TaskFlow.Services.Task.Services;
 
@@ -21,6 +22,15 @@ builder.Services.AddDbContext<TaskDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddHostedService<OutboxProcessorService>();
+
+builder.Services.AddRabbitMQModuleWithHandlers(
+    builder.Configuration,
+    module =>
+    {
+        // Task Service не потребляет сообщения, только публикует
+        // Поэтому здесь нет AddConsumer
+        // logger.LogInformation("RabbitMQ module configured for Task Service");
+    });
 
 WebApplication app = builder.Build();
 
