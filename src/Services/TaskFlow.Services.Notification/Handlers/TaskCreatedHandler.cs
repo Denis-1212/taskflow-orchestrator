@@ -6,6 +6,8 @@ using RabbitMQ.Module.Contracts;
 
 using Shared.Messaging.Events;
 
+using Task = System.Threading.Tasks.Task;
+
 public class TaskCreatedHandler(INotificationService notificationService, ILogger<TaskCreatedHandler> logger)
     : IMessageHandler<TaskCreatedEvent>
 {

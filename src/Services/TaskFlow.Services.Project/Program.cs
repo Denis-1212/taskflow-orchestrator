@@ -49,7 +49,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready");
-
 app.MapGrpcService<ProjectGrpcService>();
 
 app.Run();
