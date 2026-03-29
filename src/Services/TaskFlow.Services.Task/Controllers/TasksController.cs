@@ -4,34 +4,15 @@ using System.Security.Claims;
 
 using Application.Services;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Shared.DTOs;
 using Shared.Kernel;
 
 [ApiController]
-[Authorize]
 [Route("api/tasks")]
-public class TasksController : ControllerBase
+public class TasksController(ITaskService taskService, ILogger<TasksController> logger) : ControllerBase
 {
-
-    #region Fields
-
-    private readonly ITaskService _taskService;
-    private readonly ILogger<TasksController> _logger;
-
-    #endregion
-
-    #region Constructors
-
-    public TasksController(ITaskService taskService, ILogger<TasksController> logger)
-    {
-        _taskService = taskService;
-        _logger = logger;
-    }
-
-    #endregion
 
     #region Methods
 
@@ -40,9 +21,9 @@ public class TasksController : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        _logger.LogInformation("Creating task in project {ProjectId}", request.ProjectId);
+        logger.LogInformation("Creating task in project {ProjectId}", request.ProjectId);
 
-        Result<TaskResult> result = await _taskService.CreateAsync(
+        Result<TaskResult> result = await taskService.CreateAsync(
                                         request.ProjectId,
                                         request.Title,
                                         request.Description,
@@ -69,7 +50,7 @@ public class TasksController : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        Result<TaskResult> result = await _taskService.GetByIdAsync(id, userId);
+        Result<TaskResult> result = await taskService.GetByIdAsync(id, userId);
 
         if (result.IsFailure)
         {
@@ -93,7 +74,7 @@ public class TasksController : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        Result<IEnumerable<TaskResult>> result = await _taskService.GetTasksAsync(projectId, status, priority, assigneeId, userId);
+        Result<IEnumerable<TaskResult>> result = await taskService.GetTasksAsync(projectId, status, priority, assigneeId, userId);
 
         if (result.IsFailure)
         {
@@ -112,7 +93,7 @@ public class TasksController : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        Result<TaskResult> result = await _taskService.UpdateAsync(
+        Result<TaskResult> result = await taskService.UpdateAsync(
                                         id,
                                         request.Title,
                                         request.Description,
@@ -139,7 +120,7 @@ public class TasksController : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        Result result = await _taskService.DeleteAsync(id, userId);
+        Result result = await taskService.DeleteAsync(id, userId);
 
         if (result.IsFailure)
         {
@@ -159,7 +140,7 @@ public class TasksController : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        Result<TaskResult> result = await _taskService.ChangeStatusAsync(id, request.Status, userId, request.Comment);
+        Result<TaskResult> result = await taskService.ChangeStatusAsync(id, request.Status, userId, request.Comment);
 
         if (result.IsFailure)
         {
@@ -180,7 +161,7 @@ public class TasksController : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        Result<TaskResult> result = await _taskService.AssignTaskAsync(id, request.AssigneeId, userId);
+        Result<TaskResult> result = await taskService.AssignTaskAsync(id, request.AssigneeId, userId);
 
         if (result.IsFailure)
         {
@@ -201,7 +182,7 @@ public class TasksController : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        Result<TaskStatisticsResult> result = await _taskService.GetStatisticsAsync(projectId, userId);
+        Result<TaskStatisticsResult> result = await taskService.GetStatisticsAsync(projectId, userId);
 
         if (result.IsFailure)
         {
