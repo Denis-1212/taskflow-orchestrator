@@ -10,38 +10,21 @@ using Shared.Kernel;
 
 using ProjectService = global::Project.ProjectService;
 
-public class ProjectGrpcService : ProjectService.ProjectServiceBase
+public class ProjectGrpcService(IProjectService projectService, ILogger<ProjectGrpcService> logger) : ProjectService.ProjectServiceBase
 {
-
-    #region Fields
-
-    private readonly IProjectService _projectService;
-    private readonly ILogger<ProjectGrpcService> _logger;
-
-    #endregion
-
-    #region Constructors
-
-    public ProjectGrpcService(IProjectService projectService, ILogger<ProjectGrpcService> logger)
-    {
-        _projectService = projectService;
-        _logger = logger;
-    }
-
-    #endregion
 
     #region Methods
 
     public override async Task<GetProjectResponse> GetProject(GetProjectRequest request, ServerCallContext context)
     {
-        _logger.LogInformation("gRPC GetProject called for ProjectId: {ProjectId}", request.ProjectId);
+        logger.LogInformation("gRPC GetProject called for ProjectId: {ProjectId}", request.ProjectId);
 
         if (!Guid.TryParse(request.ProjectId, out Guid projectId))
         {
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid project ID format"));
         }
 
-        Result<ProjectResult> result = await _projectService.GetProjectForGrpcAsync(projectId);
+        Result<ProjectResult> result = await projectService.GetProjectForGrpcAsync(projectId);
 
         if (result.IsFailure)
         {
@@ -60,7 +43,7 @@ public class ProjectGrpcService : ProjectService.ProjectServiceBase
 
     public override async Task<ProjectExistsResponse> ProjectExists(ProjectExistsRequest request, ServerCallContext context)
     {
-        _logger.LogInformation("gRPC ProjectExists called for ProjectId: {ProjectId}", request.ProjectId);
+        logger.LogInformation("gRPC ProjectExists called for ProjectId: {ProjectId}", request.ProjectId);
 
         if (!Guid.TryParse(request.ProjectId, out Guid projectId))
         {
@@ -70,7 +53,7 @@ public class ProjectGrpcService : ProjectService.ProjectServiceBase
             };
         }
 
-        Result<bool> result = await _projectService.ProjectExistsAsync(projectId);
+        Result<bool> result = await projectService.ProjectExistsAsync(projectId);
 
         return new ProjectExistsResponse
         {
@@ -80,7 +63,7 @@ public class ProjectGrpcService : ProjectService.ProjectServiceBase
 
     public override async Task<ValidateMemberResponse> ValidateMember(ValidateMemberRequest request, ServerCallContext context)
     {
-        _logger.LogInformation(
+        logger.LogInformation(
             "gRPC ValidateMember called for ProjectId: {ProjectId}, UserId: {UserId}",
             request.ProjectId,
             request.UserId);
@@ -95,7 +78,7 @@ public class ProjectGrpcService : ProjectService.ProjectServiceBase
             };
         }
 
-        Result<MemberValidationResult> result = await _projectService.ValidateMemberAsync(projectId, userId);
+        Result<MemberValidationResult> result = await projectService.ValidateMemberAsync(projectId, userId);
 
         if (result.IsFailure)
         {
@@ -115,14 +98,14 @@ public class ProjectGrpcService : ProjectService.ProjectServiceBase
 
     public override async Task<GetUserProjectsResponse> GetUserProjects(GetUserProjectsRequest request, ServerCallContext context)
     {
-        _logger.LogInformation("gRPC GetUserProjects called for UserId: {UserId}", request.UserId);
+        logger.LogInformation("gRPC GetUserProjects called for UserId: {UserId}", request.UserId);
 
         if (!Guid.TryParse(request.UserId, out Guid userId))
         {
             return new GetUserProjectsResponse();
         }
 
-        Result<IEnumerable<ProjectResult>> result = await _projectService.GetUserProjectsAsync(userId);
+        Result<IEnumerable<ProjectResult>> result = await projectService.GetUserProjectsAsync(userId);
 
         var response = new GetUserProjectsResponse();
 
