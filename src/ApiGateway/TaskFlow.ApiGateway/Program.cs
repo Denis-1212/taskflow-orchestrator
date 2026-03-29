@@ -4,8 +4,19 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+using Serilog;
 
+using TaskFlow.ApiGateway.Gateway.Middleware;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.WithProperty("Service", "ApiGateway")
+    .WriteTo.Console()
+    .WriteTo.Seq("http://seq:5341")
+    .CreateLogger();
+
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
 // Add YARP reverse proxy
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
@@ -74,7 +85,6 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
-// Add Swagger
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddHealthChecks();
@@ -84,6 +94,7 @@ WebApplication app = builder.Build();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseUserIdPropagation();
 app.UseRateLimiter();
 app.MapReverseProxy();
 app.MapHealthChecks("/health/live");

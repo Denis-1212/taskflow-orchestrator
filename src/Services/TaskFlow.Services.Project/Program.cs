@@ -1,54 +1,101 @@
 using Microsoft.EntityFrameworkCore;
 
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+
+using Serilog;
+
 using TaskFlow.Services.Project.Application.Services;
 using TaskFlow.Services.Project.Infrastructure;
+using TaskFlow.Services.Project.Middleware;
 using TaskFlow.Services.Project.Services;
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.WithProperty("Service", "ProjectService")
+    .WriteTo.Console()
+    .WriteTo.Seq("http://seq:5341")
+    .CreateLogger();
 
-// Add services
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddHealthChecks();
-
-builder.Services.AddScoped<IProjectService, ProjectService>();
-builder.Services.AddDbContext<ProjectDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Add gRPC
-builder.Services.AddGrpc();
-
-WebApplication app = builder.Build();
-
-using (IServiceScope scope = app.Services.CreateScope())
+try
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<ProjectDbContext>();
+    WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-    try
+    // Add services
+    builder.Host.UseSerilog();
+    builder.Services.AddControllers();
+
+    builder.Services.AddOpenTelemetry()
+        .WithMetrics(metrics => metrics
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("ProjectService"))
+            .AddAspNetCoreInstrumentation()
+            .AddPrometheusExporter());
+
+    string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    if (string.IsNullOrEmpty(connectionString))
     {
-        app.Logger.LogInformation("Applying database migrations...");
-        dbContext.Database.Migrate();
-        app.Logger.LogInformation("Migrations applied successfully");
+        throw new InvalidOperationException("Database connection string is not configured");
     }
-    catch (Exception ex)
+
+    builder.Services.AddDbContext<ProjectDbContext>(options =>
+        options.UseNpgsql(connectionString));
+
+    builder.Services.AddGrpc();
+    builder.Services.AddScoped<IProjectService, ProjectService>();
+
+    builder.Services.AddCors(options =>
     {
-        app.Logger.LogError(ex, "Failed to apply migrations");
-        throw; // хотим чтобы контейнер падал при ошибке
+        options.AddPolicy(
+            "Development",
+            policy =>
+            {
+                policy.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
+    });
+
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+    builder.Services.AddHealthChecks();
+
+    WebApplication app = builder.Build();
+    app.MapGrpcService<ProjectGrpcService>();
+
+    app.UseMigrations();
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+        app.UseCors("Development");
     }
+
+    app.UseUserIdExtraction();
+    app.MapPrometheusScrapingEndpoint();
+    app.MapControllers();
+
+    app.MapHealthChecks("/health/live");
+    app.MapHealthChecks("/health/ready");
+    app.MapGrpcService<ProjectGrpcService>();
+
+    app.Use(async (context, next) =>
+    {
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Request: {Method} {Path}", context.Request.Method, context.Request.Path);
+        await next();
+        logger.LogInformation("Response: {StatusCode}", context.Response.StatusCode);
+    });
+
+    app.Run();
 }
-
-if (app.Environment.IsDevelopment())
+catch (Exception ex)
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    Log.Fatal(ex, "Application start-up failed");
+    throw;
 }
-
-app.UseHttpsRedirection();
-app.UseAuthorization();
-app.MapControllers();
-app.MapHealthChecks("/health/live");
-app.MapHealthChecks("/health/ready");
-app.MapGrpcService<ProjectGrpcService>();
-
-app.Run();
+finally
+{
+    Log.CloseAndFlush();
+}

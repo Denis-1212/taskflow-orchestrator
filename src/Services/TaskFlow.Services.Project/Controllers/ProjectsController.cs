@@ -4,14 +4,12 @@ using System.Security.Claims;
 
 using Application.Services;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Shared.DTOs;
 using Shared.Kernel;
 
 [ApiController]
-[Authorize]
 [Route("api/projects")]
 public class ProjectsController(IProjectService projectService) : ControllerBase
 {
@@ -191,6 +189,7 @@ public class ProjectsController(IProjectService projectService) : ControllerBase
 
     private Guid GetCurrentUserId()
     {
+        // Получаем user ID из Claims, который установил middleware
         string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid userId))

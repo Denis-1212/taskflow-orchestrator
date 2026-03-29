@@ -239,6 +239,9 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Host=172.20.0.3;Port=5432;Database=project_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
       - Grpc__AuthService=http://172.20.0.10:8080
+      - Jwt__Secret=${JWT_SECRET}
+      - Jwt__Issuer=TaskFlow
+      - Jwt__Audience=TaskFlow
     ports:
       - "5002:8080"
     networks:

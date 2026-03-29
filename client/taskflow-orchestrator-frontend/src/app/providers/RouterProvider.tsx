@@ -5,8 +5,6 @@ import { PrivateRoute } from '@/routes/PrivateRoute'
 import { PublicRoute } from '@/routes/PublicRoute'
 import { lazy, Suspense } from 'react'
 
-
-//
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
 const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage'))
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'))
@@ -40,6 +38,7 @@ export function RouterProvider() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/projects/:id" element={<ProjectsPage />} />
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/admin/audit" element={<AuditPage />} />
