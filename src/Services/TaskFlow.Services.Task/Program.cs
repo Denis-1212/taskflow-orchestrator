@@ -1,18 +1,33 @@
 using Microsoft.EntityFrameworkCore;
 
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+
+using Serilog;
+
 using TaskFlow.Services.Task.Application.Services;
 using TaskFlow.Services.Task.Clients;
 using TaskFlow.Services.Task.Extensions;
 using TaskFlow.Services.Task.Infrastructure;
 using TaskFlow.Services.Task.Services;
 
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.WithProperty("Service", "TaskService")
+    .WriteTo.Console()
+    .WriteTo.Seq("http://seq:5341")
+    .CreateLogger();
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services
+builder.Host.UseSerilog();
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddHealthChecks();
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics => metrics
+        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("ProjectService"))
+        .AddAspNetCoreInstrumentation()
+        .AddPrometheusExporter());
 
 // Register gRPC clients
 builder.Services.AddScoped<ITaskService, TaskService>();
@@ -32,36 +47,52 @@ builder.Services.AddRabbitMQModuleWithHandlers(
         // logger.LogInformation("RabbitMQ module configured for Task Service");
     });
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddHealthChecks();
+
 WebApplication app = builder.Build();
 
-// Автоматическое применение миграций
-using (IServiceScope scope = app.Services.CreateScope())
+app.Use(async (context, next) =>
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<TaskDbContext>();
-
     try
     {
-        app.Logger.LogInformation("Applying database migrations...");
-        dbContext.Database.Migrate();
-        app.Logger.LogInformation("Migrations applied successfully");
+        await next();
     }
     catch (Exception ex)
     {
-        app.Logger.LogError(ex, "Failed to apply migrations");
-        throw; // хотим чтобы контейнер падал при ошибке
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(
+            ex,
+            "Unhandled exception occurred processing {Method} {Path}",
+            context.Request.Method,
+            context.Request.Path);
+
+        throw;
     }
-}
+});
+
+app.UseMigrations();
+app.UseUserIdExtraction();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseCors("Development");
 }
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
+app.MapPrometheusScrapingEndpoint();
 app.MapControllers();
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready");
+
+app.Use(async (context, next) =>
+{
+    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation("Request: {Method} {Path}", context.Request.Method, context.Request.Path);
+    await next();
+    logger.LogInformation("Response: {StatusCode}", context.Response.StatusCode);
+});
 
 app.Run();

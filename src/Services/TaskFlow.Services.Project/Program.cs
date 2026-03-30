@@ -38,6 +38,16 @@ try
         throw new InvalidOperationException("Database connection string is not configured");
     }
 
+    // builder.WebHost.ConfigureKestrel(options =>
+    // {
+    //     options.ListenLocalhost(
+    //         5002,
+    //         listenOptions =>
+    //         {
+    //             listenOptions.Protocols = HttpProtocols.Http1AndHttp2; // ← вместо Http2
+    //         });
+    // });
+
     builder.Services.AddDbContext<ProjectDbContext>(options =>
         options.UseNpgsql(connectionString));
 
@@ -61,8 +71,27 @@ try
     builder.Services.AddHealthChecks();
 
     WebApplication app = builder.Build();
-    app.MapGrpcService<ProjectGrpcService>();
+    app.Use(async (context, next) =>
+    {
+        try
+        {
+            await next();
+        }
+        catch (Exception ex)
+        {
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError(
+                ex,
+                "Unhandled exception occurred processing {Method} {Path}",
+                context.Request.Method,
+                context.Request.Path);
 
+            throw;
+        }
+    });
+
+    app.MapGrpcService<ProjectGrpcService>();
+    app.Logger.LogInformation("gRPC service registered: ProjectGrpcService");
     app.UseMigrations();
 
     if (app.Environment.IsDevelopment())
@@ -78,7 +107,6 @@ try
 
     app.MapHealthChecks("/health/live");
     app.MapHealthChecks("/health/ready");
-    app.MapGrpcService<ProjectGrpcService>();
 
     app.Use(async (context, next) =>
     {

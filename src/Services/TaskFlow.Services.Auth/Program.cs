@@ -8,6 +8,8 @@ using OpenTelemetry.Metrics;
 
 using Serilog;
 
+using StackExchange.Redis;
+
 using TaskFlow.Services.Auth.Application.Services;
 using TaskFlow.Services.Auth.Infrastructure;
 using TaskFlow.Services.Auth.Services;
@@ -33,8 +35,15 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<IAuthService, AuthService>();
+string redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "redis:6379,password=taskflow123";
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+    ConnectionMultiplexer.Connect(redisConnectionString));
 
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+// Временная in-memory реализация (вместо Redis)
+// builder.Services.AddSingleton<IRefreshTokenService, InMemoryRefreshTokenService>();
 // Add authentication
 string? jwtSecret = builder.Configuration["Jwt:Secret"];
 
@@ -76,6 +85,25 @@ builder.Services.AddOpenTelemetry()
 builder.Services.AddGrpc();
 
 WebApplication app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(
+            ex,
+            "Unhandled exception occurred processing {Method} {Path}",
+            context.Request.Method,
+            context.Request.Path);
+
+        throw;
+    }
+});
 
 // Автоматическое применение миграций
 using (IServiceScope scope = app.Services.CreateScope())

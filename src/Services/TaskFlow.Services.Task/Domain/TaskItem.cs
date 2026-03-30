@@ -48,7 +48,7 @@ public class TaskItem
         Priority = priority;
         AssigneeId = assigneeId;
         CreatedBy = createdBy;
-        DueDate = dueDate;
+        DueDate = dueDate.Kind == DateTimeKind.Utc ? dueDate : DateTime.SpecifyKind(dueDate, DateTimeKind.Utc);
         CreatedAt = DateTime.UtcNow;
         IsDeleted = false;
 
@@ -70,7 +70,7 @@ public class TaskItem
         Title = title;
         Description = description;
         Priority = priority;
-        DueDate = dueDate;
+        DueDate = dueDate.Kind == DateTimeKind.Utc ? dueDate : DateTime.SpecifyKind(dueDate, DateTimeKind.Utc);
         UpdatedAt = DateTime.UtcNow;
 
         return Result.Success();
@@ -109,13 +109,13 @@ public class TaskItem
         Status = newStatus;
         UpdatedAt = DateTime.UtcNow;
 
-        _statusHistory.Add(
-            new TaskStatusHistory(
-                Id,
-                oldStatus,
-                newStatus,
-                changedBy,
-                comment ?? $"Status changed from {oldStatus} to {newStatus}"));
+        // _statusHistory.Add(
+        //     new TaskStatusHistory(
+        //         Id,
+        //         oldStatus,
+        //         newStatus,
+        //         changedBy,
+        //         comment ?? $"Status changed from {oldStatus} to {newStatus}"));
 
         return Result.Success();
     }

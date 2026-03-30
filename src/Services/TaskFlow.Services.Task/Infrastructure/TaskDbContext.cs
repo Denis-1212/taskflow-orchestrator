@@ -4,7 +4,7 @@ using Domain;
 
 using Microsoft.EntityFrameworkCore;
 
-public class TaskDbContext : DbContext
+public class TaskDbContext(DbContextOptions<TaskDbContext> options) : DbContext(options)
 {
 
     #region Properties
@@ -12,15 +12,6 @@ public class TaskDbContext : DbContext
     public DbSet<TaskItem> Tasks { get; set; }
     public DbSet<TaskStatusHistory> TaskStatusHistories { get; set; }
     public DbSet<OutboxMessage> OutboxMessages { get; set; }
-
-    #endregion
-
-    #region Constructors
-
-    public TaskDbContext(DbContextOptions<TaskDbContext> options)
-        : base(options)
-    {
-    }
 
     #endregion
 

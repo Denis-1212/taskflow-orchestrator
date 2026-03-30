@@ -50,6 +50,24 @@ builder.Services.AddRabbitMQModuleWithHandlers(
     });
 
 WebApplication app = builder.Build();
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(
+            ex,
+            "Unhandled exception occurred processing {Method} {Path}",
+            context.Request.Method,
+            context.Request.Path);
+
+        throw;
+    }
+});
 
 // Автоматическое применение миграций
 using (IServiceScope scope = app.Services.CreateScope())

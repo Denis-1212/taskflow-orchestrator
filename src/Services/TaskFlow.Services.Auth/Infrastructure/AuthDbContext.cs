@@ -10,7 +10,6 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
     #region Properties
 
     public DbSet<User> Users { get; set; }
-    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     #endregion
 
@@ -29,12 +28,7 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
             entity.Property(e => e.Roles);
         });
 
-        modelBuilder.Entity<RefreshToken>(entity =>
-        {
-            entity.HasKey(e => e.Token);
-            entity.Property(e => e.Token).IsRequired().HasMaxLength(256);
-            entity.HasIndex(e => e.UserId);
-        });
+        base.OnModelCreating(modelBuilder);
     }
 
     #endregion

@@ -4,12 +4,12 @@ using global::Auth;
 
 using Grpc.Core;
 
-public class AuthGrpcService(ILogger<AuthGrpcService> logger) : AuthService.AuthServiceBase
+public class AuthGrpcService(ILogger<AuthGrpcService> logger)
 {
 
     #region Methods
 
-    public override Task<GetUserResponse> GetUser(GetUserRequest request, ServerCallContext context)
+    public Task<GetUserResponse> GetUser(GetUserRequest request, ServerCallContext context)
     {
         logger.LogInformation("GetUser called with UserId: {UserId}", request.UserId);
 
@@ -24,7 +24,7 @@ public class AuthGrpcService(ILogger<AuthGrpcService> logger) : AuthService.Auth
         return Task.FromResult(response);
     }
 
-    public override Task<ValidateTokenResponse> ValidateToken(ValidateTokenRequest request, ServerCallContext context)
+    public Task<ValidateTokenResponse> ValidateToken(ValidateTokenRequest request, ServerCallContext context)
     {
         logger.LogInformation("ValidateToken called");
 
@@ -38,7 +38,7 @@ public class AuthGrpcService(ILogger<AuthGrpcService> logger) : AuthService.Auth
         return Task.FromResult(response);
     }
 
-    public override Task<GetUserRolesResponse> GetUserRoles(GetUserRolesRequest request, ServerCallContext context)
+    public Task<GetUserRolesResponse> GetUserRoles(GetUserRolesRequest request, ServerCallContext context)
     {
         logger.LogInformation("GetUserRoles called for UserId: {UserId}", request.UserId);
 
@@ -48,7 +48,7 @@ public class AuthGrpcService(ILogger<AuthGrpcService> logger) : AuthService.Auth
         return Task.FromResult(response);
     }
 
-    public override Task<CheckUserExistsResponse> CheckUserExists(CheckUserExistsRequest request, ServerCallContext context)
+    public Task<CheckUserExistsResponse> CheckUserExists(CheckUserExistsRequest request, ServerCallContext context)
     {
         logger.LogInformation("CheckUserExists called for UserId: {UserId}", request.UserId);
 
