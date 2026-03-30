@@ -51,7 +51,10 @@ public class AuthService(
         }
 
         // Create new user
-        var user = new User(email, password, fullName);
+        string passwordHash = passwordHasher.Hash(password);
+
+        // Create new user with hashed password
+        var user = new User(email, passwordHash, fullName);
 
         context.Users.Add(user);
         await context.SaveChangesAsync();

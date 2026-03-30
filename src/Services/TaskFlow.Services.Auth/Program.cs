@@ -8,6 +8,8 @@ using OpenTelemetry.Metrics;
 
 using Serilog;
 
+using StackExchange.Redis;
+
 using TaskFlow.Services.Auth.Application.Services;
 using TaskFlow.Services.Auth.Infrastructure;
 using TaskFlow.Services.Auth.Services;
@@ -33,15 +35,15 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// string redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "redis:6379";
-// builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-//     ConnectionMultiplexer.Connect(redisConnectionString));
+string redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "redis:6379,password=taskflow123";
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+    ConnectionMultiplexer.Connect(redisConnectionString));
 
 builder.Services.AddScoped<IJwtService, JwtService>();
-// builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 // Временная in-memory реализация (вместо Redis)
-builder.Services.AddSingleton<IRefreshTokenService, InMemoryRefreshTokenService>();
+// builder.Services.AddSingleton<IRefreshTokenService, InMemoryRefreshTokenService>();
 // Add authentication
 string? jwtSecret = builder.Configuration["Jwt:Secret"];
 

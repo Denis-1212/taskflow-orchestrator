@@ -6,29 +6,12 @@ using Domain;
 
 using StackExchange.Redis;
 
-public class RefreshTokenService : IRefreshTokenService
+public class RefreshTokenService(IConnectionMultiplexer redis, ILogger<RefreshTokenService> logger) : IRefreshTokenService
 {
-
-    #region Fields
-
-    private readonly IConnectionMultiplexer _redis;
-    private readonly ILogger<RefreshTokenService> _logger;
-
-    #endregion
 
     #region Properties
 
-    private IDatabase Db => _redis.GetDatabase();
-
-    #endregion
-
-    #region Constructors
-
-    public RefreshTokenService(IConnectionMultiplexer redis, ILogger<RefreshTokenService> logger)
-    {
-        _redis = redis;
-        _logger = logger;
-    }
+    private IDatabase Db => redis.GetDatabase();
 
     #endregion
 
@@ -46,7 +29,7 @@ public class RefreshTokenService : IRefreshTokenService
         string json = JsonSerializer.Serialize(data);
 
         await Db.StringSetAsync(GetKey(token), json, ttl);
-        _logger.LogDebug("Refresh token saved for user {UserId}, expires in {Ttl}", userId, ttl);
+        logger.LogDebug("Refresh token saved for user {UserId}, expires in {Ttl}", userId, ttl);
     }
 
     public async Task<RefreshTokenData?> GetRefreshTokenAsync(string token)
@@ -55,7 +38,7 @@ public class RefreshTokenService : IRefreshTokenService
 
         if (json.IsNullOrEmpty)
         {
-            _logger.LogDebug("Refresh token not found or expired");
+            logger.LogDebug("Refresh token not found or expired");
             return null;
         }
 
@@ -65,7 +48,7 @@ public class RefreshTokenService : IRefreshTokenService
     public async Task RemoveRefreshTokenAsync(string token)
     {
         await Db.KeyDeleteAsync(GetKey(token));
-        _logger.LogDebug("Refresh token removed");
+        logger.LogDebug("Refresh token removed");
     }
 
     private static string GetKey(string token)

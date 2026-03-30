@@ -33,31 +33,36 @@ public class TaskService(
     {
         logger.LogInformation("Creating task in project {ProjectId} by user {CreatedBy}", projectId, createdBy);
 
+        // ВРЕМЕННО ОТКЛЮЧЕНО:
         // Validate project exists
-        bool projectExists = await projectClient.ProjectExistsAsync(projectId);
+        // bool projectExists = await projectClient.ProjectExistsAsync(projectId);
+        //
+        // if (!projectExists)
+        // {
+        //     return Result.Failure<TaskResult>(Error.NotFound("Project", projectId));
+        // }
+        // ВРЕМЕННО ОТКЛЮЧЕНО:
+        // // Validate assignee if provided
+        // if (assigneeId.HasValue)
+        // {
+        //     (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(projectId, assigneeId.Value);
+        //
+        //     if (!memberValidation.IsMember)
+        //     {
+        //         return Result.Failure<TaskResult>(Error.Validation($"User {assigneeId} is not a member of project {projectId}"));
+        //     }
+        // }
 
-        if (!projectExists)
-        {
-            return Result.Failure<TaskResult>(Error.NotFound("Project", projectId));
-        }
-
-        // Validate assignee if provided
-        if (assigneeId.HasValue)
-        {
-            (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(projectId, assigneeId.Value);
-
-            if (!memberValidation.IsMember)
-            {
-                return Result.Failure<TaskResult>(Error.Validation($"User {assigneeId} is not a member of project {projectId}"));
-            }
-        }
+        DateTime utcDueDate = dueDate.Kind == DateTimeKind.Utc
+                                  ? dueDate
+                                  : DateTime.SpecifyKind(dueDate, DateTimeKind.Utc);
 
         if (!Enum.TryParse(priority, true, out TaskPriority taskPriority))
         {
             return Result.Failure<TaskResult>(Error.Validation($"Invalid priority: {priority}"));
         }
 
-        var task = new TaskItem(projectId, title, description, taskPriority, assigneeId, createdBy, dueDate);
+        var task = new TaskItem(projectId, title, description, taskPriority, assigneeId, createdBy, utcDueDate);
 
         context.Tasks.Add(task);
 
@@ -104,19 +109,23 @@ public class TaskService(
         }
 
         // Validate user is member of project
-        (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, userId);
-
-        if (!memberValidation.IsMember)
-        {
-            return Result.Failure<TaskResult>(Error.Forbidden("User is not a member of this project"));
-        }
+        // (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, userId);
+        //
+        // if (!memberValidation.IsMember)
+        // {
+        //     return Result.Failure<TaskResult>(Error.Forbidden("User is not a member of this project"));
+        // }
 
         if (!Enum.TryParse(priority, true, out TaskPriority taskPriority))
         {
             return Result.Failure<TaskResult>(Error.Validation($"Invalid priority: {priority}"));
         }
 
-        task.Update(title, description, taskPriority, dueDate, userId);
+        DateTime utcDueDate = dueDate.Kind == DateTimeKind.Utc
+                                  ? dueDate
+                                  : DateTime.SpecifyKind(dueDate, DateTimeKind.Utc);
+
+        task.Update(title, description, taskPriority, utcDueDate, userId);
         await context.SaveChangesAsync();
 
         return MapToResult(task);
@@ -285,18 +294,18 @@ public class TaskService(
         }
 
         // Validate user is member of project
-        (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, changedBy);
-
-        if (!memberValidation.IsMember)
-        {
-            return Result.Failure<TaskResult>(Error.Forbidden("User is not a member of this project"));
-        }
+        // (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, changedBy);
+        //
+        // if (!memberValidation.IsMember)
+        // {
+        //     return Result.Failure<TaskResult>(Error.Forbidden("User is not a member of this project"));
+        // }
 
         string oldStatus = task.Status.ToString();
-        task.ChangeStatus(newStatus, changedBy, comment);
-        await context.SaveChangesAsync();
 
-        // Save outbox message
+        task.ChangeStatus(newStatus, changedBy, comment);
+
+        // // Save outbox message
         var statusChangedEvent = new TaskStatusChangedEvent
         {
             TaskId = task.Id,
