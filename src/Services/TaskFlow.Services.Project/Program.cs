@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 
 using OpenTelemetry.Metrics;
@@ -19,7 +20,27 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
+    AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
     WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        // REST API на HTTP/1.1
+        options.ListenLocalhost(
+            5002,
+            listenOptions =>
+            {
+                listenOptions.Protocols = HttpProtocols.Http1;
+            });
+
+        // gRPC на HTTP/2
+        options.ListenLocalhost(
+            5006,
+            listenOptions =>
+            {
+                listenOptions.Protocols = HttpProtocols.Http2;
+            });
+    });
 
     // Add services
     builder.Host.UseSerilog();
@@ -37,16 +58,6 @@ try
     {
         throw new InvalidOperationException("Database connection string is not configured");
     }
-
-    // builder.WebHost.ConfigureKestrel(options =>
-    // {
-    //     options.ListenLocalhost(
-    //         5002,
-    //         listenOptions =>
-    //         {
-    //             listenOptions.Protocols = HttpProtocols.Http1AndHttp2; // ← вместо Http2
-    //         });
-    // });
 
     builder.Services.AddDbContext<ProjectDbContext>(options =>
         options.UseNpgsql(connectionString));

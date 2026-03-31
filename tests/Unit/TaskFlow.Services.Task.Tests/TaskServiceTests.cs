@@ -28,6 +28,7 @@ public class TaskServiceTests : IDisposable
     private readonly Mock<IProjectGrpcClient> _projectClientMock;
     private readonly Mock<ILogger<TaskService>> _loggerMock;
     private readonly TaskService _taskService;
+    private readonly Mock<IAuthGrpcClient> _authGrpcClientMock;
 
     #endregion
 
@@ -37,8 +38,9 @@ public class TaskServiceTests : IDisposable
     {
         _context = TestDatabase.Create();
         _projectClientMock = new Mock<IProjectGrpcClient>();
+        _authGrpcClientMock = new Mock<IAuthGrpcClient>();
         _loggerMock = new Mock<ILogger<TaskService>>();
-        _taskService = new TaskService(_context, _projectClientMock.Object, _loggerMock.Object);
+        _taskService = new TaskService(_context, _projectClientMock.Object, _authGrpcClientMock.Object, _loggerMock.Object);
     }
 
     #endregion
