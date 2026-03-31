@@ -12,6 +12,10 @@ public interface IAuthService
     Task<Result<AuthResult>> RefreshTokenAsync(string refreshToken, string ipAddress);
     Task<Result> LogoutAsync(string refreshToken);
     Task<Result<UserResult>> GetCurrentUserAsync(Guid userId);
+    Task<Result<UserResult>> GetUserByIdAsync(Guid userId);
+    Task<Result<UserResult>> GetUserByEmailAsync(string email);
+    Task<bool> ValidateToken(string requestToken);
+    Task<Result<string[]>> GetUserRoles(Guid userId);
 
     #endregion
 

@@ -1,6 +1,6 @@
-namespace TaskFlow.Services.Auth.Services;
+namespace TaskFlow.Services.Auth.Application.Services;
 
-using Application.Services;
+using Auth.Services;
 
 using Domain;
 
@@ -188,6 +188,25 @@ public class AuthService(
         }
 
         return new UserResult(user.Id, user.Email, user.FullName, user.IsActive, user.Roles.ToArray());
+    }
+
+    public async Task<bool> ValidateToken(string requestToken)
+    {
+        RefreshTokenData? tokenData = await refreshTokenService.GetRefreshTokenAsync(requestToken);
+
+        return tokenData != null;
+    }
+
+    public async Task<Result<string[]>> GetUserRoles(Guid userId)
+    {
+        User? user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+        {
+            return Error.NotFound("User", userId.ToString());
+        }
+
+        return user.Roles.ToArray();
     }
 
     #endregion

@@ -1,6 +1,7 @@
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -21,9 +22,30 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.Seq("http://seq:5341")
     .CreateLogger();
 
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    // REST API
+    options.ListenLocalhost(
+        5001,
+        listenOptions =>
+        {
+            listenOptions.Protocols = HttpProtocols.Http1;
+        });
+
+    // gRPC
+    options.ListenLocalhost(
+        5007,
+        listenOptions =>
+        {
+            listenOptions.Protocols = HttpProtocols.Http2;
+        });
+});
+
 // Add services
+builder.Services.AddGrpc();
 builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -80,10 +102,6 @@ builder.Services.AddOpenTelemetry()
             options.ScrapeResponseCacheDurationMilliseconds = 0;
         }));
 
-// Add gRPC
-
-builder.Services.AddGrpc();
-
 WebApplication app = builder.Build();
 
 app.Use(async (context, next) =>
@@ -131,42 +149,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
+app.MapGrpcService<AuthGrpcService>();
 app.MapControllers();
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready");
 app.MapPrometheusScrapingEndpoint();
-app.Use(async (context, next) =>
-{
-    Stream originalBody = context.Response.Body;
-    using var memoryStream = new MemoryStream();
-    context.Response.Body = memoryStream;
-
-    await next();
-
-    if (context.Request.Path == "/metrics")
-    {
-        memoryStream.Position = 0;
-        string responseText = await new StreamReader(memoryStream).ReadToEndAsync();
-
-        // Remove lines starting with "# UNIT"
-        string[] filteredLines = responseText.Split('\n')
-            .Where(line => !line.StartsWith("# UNIT"))
-            .ToArray();
-
-        string newResponseText = string.Join("\n", filteredLines);
-
-        context.Response.Body = originalBody;
-        byte[] bytes = Encoding.UTF8.GetBytes(newResponseText);
-        await context.Response.Body.WriteAsync(bytes);
-    }
-    else
-    {
-        memoryStream.Position = 0;
-        await memoryStream.CopyToAsync(originalBody);
-        context.Response.Body = originalBody;
-    }
-});
-
-app.MapGrpcService<AuthGrpcService>();
 
 app.Run();

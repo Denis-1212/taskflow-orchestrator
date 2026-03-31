@@ -2,6 +2,8 @@ namespace TaskFlow.Services.Task.Application.Services;
 
 using System.Text.Json;
 
+using Auth;
+
 using Clients;
 
 using Domain;
@@ -16,6 +18,7 @@ using Shared.Messaging.Events;
 public class TaskService(
     TaskDbContext context,
     IProjectGrpcClient projectClient,
+    IAuthGrpcClient authGrpcClient,
     ILogger<TaskService> logger)
     : ITaskService
 {
@@ -35,23 +38,24 @@ public class TaskService(
 
         // ВРЕМЕННО ОТКЛЮЧЕНО:
         // Validate project exists
-        // bool projectExists = await projectClient.ProjectExistsAsync(projectId);
-        //
-        // if (!projectExists)
-        // {
-        //     return Result.Failure<TaskResult>(Error.NotFound("Project", projectId));
-        // }
+        bool projectExists = await projectClient.ProjectExistsAsync(projectId);
+
+        if (!projectExists)
+        {
+            return Result.Failure<TaskResult>(Error.NotFound("Project", projectId));
+        }
+
         // ВРЕМЕННО ОТКЛЮЧЕНО:
-        // // Validate assignee if provided
-        // if (assigneeId.HasValue)
-        // {
-        //     (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(projectId, assigneeId.Value);
-        //
-        //     if (!memberValidation.IsMember)
-        //     {
-        //         return Result.Failure<TaskResult>(Error.Validation($"User {assigneeId} is not a member of project {projectId}"));
-        //     }
-        // }
+        // Validate assignee if provided
+        if (assigneeId.HasValue)
+        {
+            (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(projectId, assigneeId.Value);
+
+            if (!memberValidation.IsMember)
+            {
+                return Result.Failure<TaskResult>(Error.Validation($"User {assigneeId} is not a member of project {projectId}"));
+            }
+        }
 
         DateTime utcDueDate = dueDate.Kind == DateTimeKind.Utc
                                   ? dueDate
@@ -109,12 +113,12 @@ public class TaskService(
         }
 
         // Validate user is member of project
-        // (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, userId);
-        //
-        // if (!memberValidation.IsMember)
-        // {
-        //     return Result.Failure<TaskResult>(Error.Forbidden("User is not a member of this project"));
-        // }
+        (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, userId);
+
+        if (!memberValidation.IsMember)
+        {
+            return Result.Failure<TaskResult>(Error.Forbidden("User is not a member of this project"));
+        }
 
         if (!Enum.TryParse(priority, true, out TaskPriority taskPriority))
         {
@@ -280,6 +284,10 @@ public class TaskService(
             status,
             changedBy);
 
+        // Получить информацию о пользователе
+        GetUserResponse? user = await authGrpcClient.GetUserAsync(changedBy);
+        logger.LogWarning("Задача изменена пользователем {user.FullName}", user.FullName);
+
         if (!Enum.TryParse(status, true, out TaskItemStatus newStatus))
         {
             return Result.Failure<TaskResult>(Error.Validation($"Invalid status: {status}"));
@@ -294,12 +302,12 @@ public class TaskService(
         }
 
         // Validate user is member of project
-        // (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, changedBy);
-        //
-        // if (!memberValidation.IsMember)
-        // {
-        //     return Result.Failure<TaskResult>(Error.Forbidden("User is not a member of this project"));
-        // }
+        (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, changedBy);
+
+        if (!memberValidation.IsMember)
+        {
+            return Result.Failure<TaskResult>(Error.Forbidden("User is not a member of this project"));
+        }
 
         string oldStatus = task.Status.ToString();
 
