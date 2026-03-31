@@ -32,8 +32,7 @@ public class ProjectGrpcClient : IProjectGrpcClient
     public ProjectGrpcClient(IConfiguration configuration, ILogger<ProjectGrpcClient> logger)
     {
         _logger = logger;
-        string address = configuration["Grpc:ProjectService:Url"] ?? "http://localhost:5002";
-        // string address = configuration["Grpc:ProjectService"] ?? "http://project-service:8080";
+        string address = configuration["Grpc:ProjectService:Url"] ?? "http://localhost:5006";
         GrpcChannel channel = GrpcChannel.ForAddress(address);
 
         _client = new ProjectService.ProjectServiceClient(channel);

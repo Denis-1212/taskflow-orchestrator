@@ -4,23 +4,6 @@ using Auth;
 
 using Grpc.Net.Client;
 
-using Polly;
-using Polly.Extensions.Http;
-
-public interface IAuthGrpcClient
-{
-
-    #region Methods
-
-    Task<GetUserResponse?> GetUserAsync(Guid userId, CancellationToken cancellationToken = default);
-    Task<bool> ValidateTokenAsync(string token, CancellationToken cancellationToken = default);
-    Task<string[]> GetUserRolesAsync(Guid userId, CancellationToken cancellationToken = default);
-    Task<bool> CheckUserExistsAsync(Guid userId, CancellationToken cancellationToken = default);
-
-    #endregion
-
-}
-
 public class AuthGrpcClient : IAuthGrpcClient
 {
 
@@ -28,8 +11,6 @@ public class AuthGrpcClient : IAuthGrpcClient
 
     private readonly AuthService.AuthServiceClient _client;
     private readonly ILogger<AuthGrpcClient> _logger;
-    private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
-    private readonly IAsyncPolicy<HttpResponseMessage> _circuitBreakerPolicy;
 
     #endregion
 
@@ -37,37 +18,20 @@ public class AuthGrpcClient : IAuthGrpcClient
 
     public AuthGrpcClient(IConfiguration configuration, ILogger<AuthGrpcClient> logger)
     {
+        string url = configuration["Grpc:AuthService:Url"] ?? "http://localhost:5007";
         _logger = logger;
+        _logger.LogInformation("Creating gRPC client for AuthService at {Url}", url);
 
-        string address = configuration["Grpc:AuthService"] ?? "http://auth-service:8080";
-        var httpHandler = new HttpClientHandler();
-        GrpcChannel channel = GrpcChannel.ForAddress(
-            address,
-            new GrpcChannelOptions
-            {
-                HttpHandler = httpHandler
-            });
-
+        GrpcChannel channel = GrpcChannel.ForAddress(url);
         _client = new AuthService.AuthServiceClient(channel);
-
-        // Configure resilience policies
-        _retryPolicy = HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .WaitAndRetryAsync(
-                3,
-                retryAttempt =>
-                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-
-        _circuitBreakerPolicy = HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
     }
 
     #endregion
 
     #region Methods
 
-    public async Task<GetUserResponse?> GetUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    [Obsolete("Obsolete")]
+    public async Task<GetUserResponse> GetUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -78,8 +42,22 @@ public class AuthGrpcClient : IAuthGrpcClient
                 UserId = userId.ToString()
             };
 
-            GetUserResponse? response = await _client.GetUserAsync(request, cancellationToken: cancellationToken);
+            // Включаем детальное логирование для этого вызова
+            var handler = new HttpClientHandler();
+            var httpClient = new HttpClient(handler);
 
+            GrpcChannel channel = GrpcChannel.ForAddress(
+                "http://localhost:5007",
+                new GrpcChannelOptions
+                {
+                    HttpClient = httpClient,
+                    LoggerFactory = new LoggerFactory().AddConsole() // Временно для отладки
+                });
+
+            var client = new AuthService.AuthServiceClient(channel);
+
+            GetUserResponse response = await client.GetUserAsync(request, cancellationToken: cancellationToken);
+            _logger.LogInformation("Response received. UserId: {UserId}, Email: {Email}", response.UserId, response.Email);
             return response;
         }
         catch (Exception ex)
@@ -153,6 +131,17 @@ public class AuthGrpcClient : IAuthGrpcClient
             _logger.LogError(ex, "Error calling AuthService.CheckUserExists for UserId: {UserId}", userId);
             throw;
         }
+    }
+
+    public async Task<GetUserResponse> GetUserByEmailAsync(string email)
+    {
+        var request = new GetUserByEmailRequest
+        {
+            Email = email
+        };
+
+        GetUserResponse? response = await _client.GetUserByEmailAsync(request);
+        return response;
     }
 
     #endregion
