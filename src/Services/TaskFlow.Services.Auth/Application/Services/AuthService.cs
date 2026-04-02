@@ -209,6 +209,25 @@ public class AuthService(
         return user.Roles.ToArray();
     }
 
+    public async Task<Result<IEnumerable<UserResult>>> GetUsersAsync(string query)
+    {
+        try
+        {
+            IQueryable<User> users = context.Users.Where(user => user.Email.Contains(query) || user.FullName.Contains(query));
+
+            var userResults = new List<UserResult>();
+
+            await users.ForEachAsync(user => userResults.Add(
+                new UserResult(user.Id, user.Email, user.FullName, user.IsActive, user.Roles.ToArray())));
+
+            return await Task.FromResult<Result<IEnumerable<UserResult>>>(userResults);
+        }
+        catch (Exception exception)
+        {
+            return await Task.FromException<Result<IEnumerable<UserResult>>>(exception);
+        }
+    }
+
     #endregion
 
 }

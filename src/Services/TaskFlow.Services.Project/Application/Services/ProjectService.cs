@@ -1,16 +1,21 @@
 namespace TaskFlow.Services.Project.Application.Services;
 
+using Auth;
+
+using Clients;
+
 using Domain;
 
 using Infrastructure;
 
 using Microsoft.EntityFrameworkCore;
 
+using Shared.DTOs;
 using Shared.Kernel;
 
 using Project = Domain.Project;
 
-public class ProjectService(ProjectDbContext context, ILogger<ProjectService> logger) : IProjectService
+public class ProjectService(ProjectDbContext context, IAuthGrpcClient authGrpcClient, ILogger<ProjectService> logger) : IProjectService
 {
 
     #region Methods
@@ -198,7 +203,7 @@ public class ProjectService(ProjectDbContext context, ILogger<ProjectService> lo
         return Result.Success();
     }
 
-    public async Task<Result<IEnumerable<ProjectMemberResult>>> GetProjectMembersAsync(Guid projectId, Guid userId)
+    public async Task<Result<IEnumerable<ProjectMemberDto>>> GetProjectMembersAsync(Guid projectId, Guid userId)
     {
         Project? project = await context.Projects
                                .Include(p => p.Members)
@@ -219,7 +224,22 @@ public class ProjectService(ProjectDbContext context, ILogger<ProjectService> lo
             m.Role.ToString(),
             m.JoinedAt));
 
-        return members.ToList();
+        IEnumerable<ProjectMemberResult> projectMemberResults = members as ProjectMemberResult[] ?? members.ToArray();
+
+        var result = new List<ProjectMemberDto>();
+
+        foreach (ProjectMemberResult projectMember in projectMemberResults)
+        {
+            GetUserResponse user = await authGrpcClient.GetUserAsync(projectMember.UserId);
+            result.Add(
+                new ProjectMemberDto(
+                    projectMember.UserId,
+                    user.Email,
+                    user.FullName,
+                    projectMember.Role));
+        }
+
+        return result;
     }
 
     // gRPC методы

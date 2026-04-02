@@ -7,6 +7,7 @@ using OpenTelemetry.Resources;
 using Serilog;
 
 using TaskFlow.Services.Project.Application.Services;
+using TaskFlow.Services.Project.Clients;
 using TaskFlow.Services.Project.Infrastructure;
 using TaskFlow.Services.Project.Middleware;
 using TaskFlow.Services.Project.Services;
@@ -51,6 +52,8 @@ try
             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("ProjectService"))
             .AddAspNetCoreInstrumentation()
             .AddPrometheusExporter());
+
+    builder.Services.AddScoped<IAuthGrpcClient, AuthGrpcClient>();
 
     string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 

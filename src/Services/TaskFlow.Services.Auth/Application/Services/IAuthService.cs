@@ -16,6 +16,7 @@ public interface IAuthService
     Task<Result<UserResult>> GetUserByEmailAsync(string email);
     Task<bool> ValidateToken(string requestToken);
     Task<Result<string[]>> GetUserRoles(Guid userId);
+    Task<Result<IEnumerable<UserResult>>> GetUsersAsync(string query);
 
     #endregion
 

@@ -7,13 +7,14 @@ import { Plus, Trash2, RefreshCw, Pencil } from 'lucide-react'
 import { Project } from '../types/project.types'
 import { useState } from 'react'
 import { EditProjectDialog } from '../components/EditProjectDialog'
+import { useNavigate } from 'react-router-dom'
 
 export default function ProjectsPage() {
   const { user } = useAuthStore()
   const { data: projects, isLoading, error, refetch } = useProjects()
   const deleteProject = useDeleteProject()
   const [editingProject, setEditingProject] = useState<Project | null>(null)
-
+  const navigate = useNavigate()
 
   // Показываем ошибку загрузки
   if (error) {
@@ -97,7 +98,10 @@ export default function ProjectsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <Card key={project.id} className="p-6">
+            <Card key={project.id}
+              className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => navigate(`/projects/${project.id}`)}
+            >
               <div className="flex justify-between items-start gap-2">
                 <h3 className="font-semibold truncate flex-1" title={project.name}>
                   {project.name.length > 30 ? `${project.name.substring(0, 30)}...` : project.name}

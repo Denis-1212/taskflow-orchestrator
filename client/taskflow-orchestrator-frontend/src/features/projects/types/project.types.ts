@@ -15,3 +15,18 @@ export interface UpdateProjectRequest {
   name?: string
   description?: string
 }
+
+export type ProjectRole = 'Owner' | 'Member' | 'Viewer'
+
+export interface ProjectMember {
+  userId: string
+  userEmail: string
+  fullName: string
+  role: ProjectRole
+}
+
+export interface AddMemberRequest {
+  userId: string
+  role: Exclude<ProjectRole, 'Owner'>
+}
+

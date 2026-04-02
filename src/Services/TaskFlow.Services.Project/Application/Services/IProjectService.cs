@@ -1,5 +1,6 @@
 namespace TaskFlow.Services.Project.Application.Services;
 
+using Shared.DTOs;
 using Shared.Kernel;
 
 public interface IProjectService
@@ -16,7 +17,7 @@ public interface IProjectService
     Task<Result> AddMemberAsync(Guid projectId, Guid userId, string role, Guid addedBy);
     Task<Result> RemoveMemberAsync(Guid projectId, Guid userId, Guid removedBy);
     Task<Result> UpdateMemberRoleAsync(Guid projectId, Guid userId, string newRole, Guid updatedBy);
-    Task<Result<IEnumerable<ProjectMemberResult>>> GetProjectMembersAsync(Guid projectId, Guid userId);
+    Task<Result<IEnumerable<ProjectMemberDto>>> GetProjectMembersAsync(Guid projectId, Guid userId);
 
     // Для gRPC
     Task<Result<ProjectResult>> GetProjectForGrpcAsync(Guid projectId);

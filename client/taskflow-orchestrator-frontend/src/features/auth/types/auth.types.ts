@@ -22,3 +22,10 @@ export interface AuthResponse {
   refreshToken: string
   user: User
 }
+
+export interface ApiResponse<T> {
+  value: T
+  isSuccess: boolean
+  isFailure: boolean
+  error: string | null
+}

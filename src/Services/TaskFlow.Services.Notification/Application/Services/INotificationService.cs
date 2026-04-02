@@ -1,5 +1,7 @@
 namespace TaskFlow.Services.Notification.Application.Services;
 
+using Domain;
+
 using Shared.Kernel;
 
 public interface INotificationService
@@ -7,7 +9,7 @@ public interface INotificationService
 
     #region Methods
 
-    Task<Result> CreateInAppNotificationAsync(Guid userId, string type, string title, string content, string metadata);
+    Task<Result> CreateInAppNotificationAsync(Guid userId, NotificationType type, string title, string content, string metadata);
     Task<Result<IEnumerable<NotificationResult>>> GetUserNotificationsAsync(Guid userId, bool unreadOnly = false, int page = 1, int pageSize = 20);
     Task<Result> MarkAsReadAsync(Guid notificationId, Guid userId);
     Task<Result<int>> GetUnreadCountAsync(Guid userId);

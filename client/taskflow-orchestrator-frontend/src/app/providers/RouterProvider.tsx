@@ -12,6 +12,7 @@ const ProjectsPage = lazy(() => import('@/features/projects/pages/ProjectsPage')
 const TasksPage = lazy(() => import('@/features/tasks/pages/TasksPage'))
 const NotificationsPage = lazy(() => import('@/features/notifications/pages/NotificationsPage'))
 const AuditPage = lazy(() => import('@/features/admin/pages/AuditPage'))
+const ProjectDetailPage = lazy(() => import('@/features/projects/pages/ProjectDetailPage'))
 
 function LoadingFallback() {
   return (
@@ -38,10 +39,10 @@ export function RouterProvider() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
-              <Route path="/projects/:id" element={<ProjectsPage />} />
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/admin/audit" element={<AuditPage />} />
+              <Route path="/projects/:id" element={<ProjectDetailPage />} />
             </Route>
           </Route>
 
