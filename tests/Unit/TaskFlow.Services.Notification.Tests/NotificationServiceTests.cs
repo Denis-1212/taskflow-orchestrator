@@ -51,13 +51,12 @@ public class NotificationServiceTests : IDisposable
     {
         // Arrange
         var userId = Guid.NewGuid();
-        string type = "TaskAssigned";
         string title = "Test Notification";
         string content = "Test Content";
         string metadata = "{\"taskId\":\"123\"}";
 
         // Act
-        Result result = await _notificationService.CreateInAppNotificationAsync(userId, type, title, content, metadata);
+        Result result = await _notificationService.CreateInAppNotificationAsync(userId, NotificationType.TaskAssigned, title, content, metadata);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -68,25 +67,6 @@ public class NotificationServiceTests : IDisposable
         notification.Content.Should().Be(content);
         notification.Type.Should().Be(NotificationType.TaskAssigned);
         notification.IsRead.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task CreateInAppNotificationAsync_WithInvalidType_ShouldReturnValidationError()
-    {
-        // Arrange
-        var userId = Guid.NewGuid();
-        string type = "InvalidType";
-        string title = "Test Notification";
-        string content = "Test Content";
-        string metadata = "{}";
-
-        // Act
-        Result result = await _notificationService.CreateInAppNotificationAsync(userId, type, title, content, metadata);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error!.Type.Should().Be(ErrorType.Validation);
-        result.Error.Message.Should().Contain("Invalid notification type");
     }
 
     [Fact]

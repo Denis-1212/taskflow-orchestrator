@@ -335,7 +335,8 @@ public class MessageDispatcher(
         IMessageContext context,
         CancellationToken cancellationToken)
     {
-        object? handler = CreateHandler(registration.HandlerType);
+        using IServiceScope scope = serviceProvider!.CreateScope();
+        object? handler = CreateHandler(registration.HandlerType, scope.ServiceProvider);
 
         if (handler == null)
         {
@@ -359,13 +360,13 @@ public class MessageDispatcher(
         }
     }
 
-    private object? CreateHandler(Type handlerType)
+    private object? CreateHandler(Type handlerType, IServiceProvider scopedServiceProvider)
     {
-        if (serviceProvider != null)
+        if (scopedServiceProvider != null)
         {
             try
             {
-                return ActivatorUtilities.CreateInstance(serviceProvider, handlerType);
+                return ActivatorUtilities.CreateInstance(scopedServiceProvider, handlerType);
             }
             catch (Exception ex)
             {

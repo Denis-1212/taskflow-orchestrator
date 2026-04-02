@@ -38,14 +38,7 @@ builder.Services.AddDbContext<TaskDbContext>(options =>
 
 builder.Services.AddHostedService<OutboxProcessorService>();
 
-builder.Services.AddRabbitMQModuleWithHandlers(
-    builder.Configuration,
-    module =>
-    {
-        // Task Service не потребляет сообщения, только публикует
-        // Поэтому здесь нет AddConsumer
-        // logger.LogInformation("RabbitMQ module configured for Task Service");
-    });
+builder.Services.AddRabbitMQModuleWithHandlers(builder.Configuration);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

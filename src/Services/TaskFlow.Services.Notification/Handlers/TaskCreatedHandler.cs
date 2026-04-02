@@ -2,11 +2,13 @@ namespace TaskFlow.Services.Notification.Handlers;
 
 using Application.Services;
 
+using Domain;
+
 using RabbitMQ.Module.Contracts;
 
 using Shared.Messaging.Events;
 
-using Task = System.Threading.Tasks.Task;
+using Task = Task;
 
 public class TaskCreatedHandler(INotificationService notificationService, ILogger<TaskCreatedHandler> logger)
     : IMessageHandler<TaskCreatedEvent>
@@ -21,7 +23,7 @@ public class TaskCreatedHandler(INotificationService notificationService, ILogge
         // Уведомление создателю задачи
         await notificationService.CreateInAppNotificationAsync(
             message.CreatedBy,
-            "TaskCreated",
+            NotificationType.TaskCreated,
             $"Task Created: {message.TaskTitle}",
             $"Task '{message.TaskTitle}' has been created in project {message.ProjectId}",
             $"{{\"taskId\":\"{message.TaskId}\",\"projectId\":\"{message.ProjectId}\"}}");
@@ -31,13 +33,11 @@ public class TaskCreatedHandler(INotificationService notificationService, ILogge
         {
             await notificationService.CreateInAppNotificationAsync(
                 message.AssigneeId.Value,
-                "TaskAssigned",
+                NotificationType.TaskAssigned,
                 $"Task Assigned: {message.TaskTitle}",
                 $"You have been assigned to task '{message.TaskTitle}' due on {message.DueDate:dd.MM.yyyy}",
                 $"{{\"taskId\":\"{message.TaskId}\",\"projectId\":\"{message.ProjectId}\"}}");
         }
-
-        await context.AckAsync(cancellationToken);
     }
 
     #endregion

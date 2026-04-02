@@ -113,6 +113,39 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [Authorize]
+    [HttpGet("users-search")]
+    public async Task<IActionResult> SearchUsers(string query)
+    {
+        Result result = await authService.GetUsersAsync(query);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error);
+        }
+
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpGet("users")]
+    public async Task<IActionResult> GetUserById(string userId)
+    {
+        if (!Guid.TryParse(userId, out Guid guid))
+        {
+            return BadRequest(Error.Validation("Validation Guid error"));
+        }
+
+        Result result = await authService.GetUserByIdAsync(guid);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Error);
+        }
+
+        return Ok(result);
+    }
+
+    [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult<UserDto>> GetCurrentUser()
     {

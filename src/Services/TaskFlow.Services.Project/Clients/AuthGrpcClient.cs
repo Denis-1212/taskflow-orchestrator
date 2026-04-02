@@ -1,4 +1,4 @@
-namespace TaskFlow.Services.Task.Clients;
+namespace TaskFlow.Services.Project.Clients;
 
 using Auth;
 

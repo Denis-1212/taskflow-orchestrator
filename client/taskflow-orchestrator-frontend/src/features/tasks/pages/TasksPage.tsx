@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { Plus, RefreshCw, Pencil } from 'lucide-react'
+import { Plus, RefreshCw, Pencil, Trash2, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { useTasks, useChangeStatus } from '../hooks/useTasks'
+import { useTasks, useChangeStatus, useDeleteTask } from '../hooks/useTasks'
 import { CreateTaskDialog } from '../components/CreateTaskDialog'
 import { EditTaskDialog } from '../components/EditTaskDialog'
 import { TaskFilters } from '../components/TaskFilters'
 import { Task, TaskStatus } from '../types/task.types'
+import { AssignTaskDialog } from '../components/AssignTaskDialog'
 
 export default function TasksPage() {
   const [filters, setFilters] = useState<{
@@ -19,6 +20,15 @@ export default function TasksPage() {
 
   const { data: tasks, isLoading, error, refetch } = useTasks(filters)
   const changeStatus = useChangeStatus()
+  const deleteTask = useDeleteTask()
+  const [assigningTask, setAssigningTask] = useState<Task | null>(null)
+
+  const handleDeleteTask = (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (confirm('Are you sure you want to delete this task?')) {
+      deleteTask.mutate(taskId)
+    }
+  }
 
   const handleFilterChange = (newFilters: typeof filters) => {
     setFilters(newFilters)
@@ -97,6 +107,22 @@ export default function TasksPage() {
                   >
                     <Pencil className="h-3 w-3" />
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setAssigningTask(task)}
+                  >
+                    <User className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    onClick={(e) => handleDeleteTask(task.id, e)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                   <span className={`text-xs px-2 py-1 rounded ${task.priority === 'Critical' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                     task.priority === 'High' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
                       task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
@@ -145,6 +171,14 @@ export default function TasksPage() {
           open={!!editingTask}
           onClose={() => setEditingTask(null)}
 
+        />
+      )}
+
+      {assigningTask && (
+        <AssignTaskDialog
+          task={assigningTask}
+          open={!!assigningTask}
+          onClose={() => setAssigningTask(null)}
         />
       )}
     </div>

@@ -12,6 +12,8 @@ using Infrastructure;
 
 using Microsoft.EntityFrameworkCore;
 
+using RabbitMQ.Module.Contracts;
+
 using Shared.Kernel;
 using Shared.Messaging.Events;
 
@@ -19,9 +21,19 @@ public class TaskService(
     TaskDbContext context,
     IProjectGrpcClient projectClient,
     IAuthGrpcClient authGrpcClient,
+    IPublisher publisher,
     ILogger<TaskService> logger)
     : ITaskService
 {
+
+    #region Constants
+
+    private const string TASK_CREATED_ROUTING_KEY = "notification.task-created";
+    private const string TASK_STATUS_CHANGED_ROUTING_KEY = "notification.task-status-changed";
+    private const string TASK_DELETED_ROUTING_KEY = "notification.task-deleted";
+    private const string TASK_ASSIGNED_CHANGED_ROUTING_KEY = "notification.task-assigned-changed";
+
+    #endregion
 
     #region Methods
 
@@ -36,8 +48,6 @@ public class TaskService(
     {
         logger.LogInformation("Creating task in project {ProjectId} by user {CreatedBy}", projectId, createdBy);
 
-        // ВРЕМЕННО ОТКЛЮЧЕНО:
-        // Validate project exists
         bool projectExists = await projectClient.ProjectExistsAsync(projectId);
 
         if (!projectExists)
@@ -45,8 +55,6 @@ public class TaskService(
             return Result.Failure<TaskResult>(Error.NotFound("Project", projectId));
         }
 
-        // ВРЕМЕННО ОТКЛЮЧЕНО:
-        // Validate assignee if provided
         if (assigneeId.HasValue)
         {
             (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(projectId, assigneeId.Value);
@@ -88,6 +96,12 @@ public class TaskService(
 
         context.OutboxMessages.Add(outboxMessage);
         await context.SaveChangesAsync();
+        await publisher.PublishAsync(
+            taskCreatedEvent,
+            c =>
+            {
+                c.WithRoutingKey(TASK_CREATED_ROUTING_KEY);
+            });
 
         logger.LogInformation("Task created with Id: {TaskId}", task.Id);
 
@@ -112,7 +126,6 @@ public class TaskService(
             return Result.Failure<TaskResult>(Error.NotFound("Task", taskId));
         }
 
-        // Validate user is member of project
         (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, userId);
 
         if (!memberValidation.IsMember)
@@ -157,6 +170,22 @@ public class TaskService(
 
         task.SoftDelete();
         await context.SaveChangesAsync();
+
+        var taskDeletedEvent = new TaskDeletedEvent
+        {
+            DeletedBy = userId,
+            OccurredAt = DateTime.UtcNow,
+            ProjectId = task.ProjectId,
+            TaskId = task.Id,
+            TaskTitle = task.Title
+        };
+
+        await publisher.PublishAsync(
+            taskDeletedEvent,
+            c =>
+            {
+                c.WithRoutingKey(TASK_DELETED_ROUTING_KEY);
+            });
 
         return Result.Success();
     }
@@ -273,6 +302,13 @@ public class TaskService(
         context.OutboxMessages.Add(outboxMessage);
         await context.SaveChangesAsync();
 
+        await publisher.PublishAsync(
+            taskAssignedEvent,
+            c =>
+            {
+                c.WithRoutingKey(TASK_ASSIGNED_CHANGED_ROUTING_KEY);
+            });
+
         return MapToResult(task);
     }
 
@@ -285,7 +321,7 @@ public class TaskService(
             changedBy);
 
         // Получить информацию о пользователе
-        GetUserResponse? user = await authGrpcClient.GetUserAsync(changedBy);
+        GetUserResponse user = await authGrpcClient.GetUserAsync(changedBy);
         logger.LogWarning("Задача изменена пользователем {user.FullName}", user.FullName);
 
         if (!Enum.TryParse(status, true, out TaskItemStatus newStatus))
@@ -331,6 +367,13 @@ public class TaskService(
 
         context.OutboxMessages.Add(outboxMessage);
         await context.SaveChangesAsync();
+
+        await publisher.PublishAsync(
+            statusChangedEvent,
+            c =>
+            {
+                c.WithRoutingKey(TASK_STATUS_CHANGED_ROUTING_KEY);
+            });
 
         return MapToResult(task);
     }

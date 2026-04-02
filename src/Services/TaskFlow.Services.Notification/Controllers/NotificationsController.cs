@@ -13,23 +13,8 @@ using Shared.Kernel;
 [ApiController]
 [Authorize]
 [Route("api/notifications")]
-public class NotificationsController : ControllerBase
+public class NotificationsController(INotificationService notificationService) : ControllerBase
 {
-
-    #region Fields
-
-    private readonly INotificationService _notificationService;
-
-    #endregion
-
-    #region Constructors
-
-    public NotificationsController(INotificationService notificationService)
-    {
-        _notificationService = notificationService;
-    }
-
-    #endregion
 
     #region Methods
 
@@ -41,7 +26,7 @@ public class NotificationsController : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        Result<IEnumerable<NotificationResult>> result = await _notificationService.GetUserNotificationsAsync(userId, unreadOnly, page, pageSize);
+        Result<IEnumerable<NotificationResult>> result = await notificationService.GetUserNotificationsAsync(userId, unreadOnly, page, pageSize);
 
         if (result.IsFailure)
         {
@@ -56,7 +41,7 @@ public class NotificationsController : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        Result<int> result = await _notificationService.GetUnreadCountAsync(userId);
+        Result<int> result = await notificationService.GetUnreadCountAsync(userId);
 
         if (result.IsFailure)
         {
@@ -71,7 +56,7 @@ public class NotificationsController : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        Result result = await _notificationService.MarkAsReadAsync(id, userId);
+        Result result = await notificationService.MarkAsReadAsync(id, userId);
 
         if (result.IsFailure)
         {

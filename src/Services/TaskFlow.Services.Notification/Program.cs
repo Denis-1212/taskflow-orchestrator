@@ -1,53 +1,40 @@
 using Microsoft.EntityFrameworkCore;
 
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+
+using RabbitMQ.Module;
+
 using TaskFlow.Services.Notification.Application.Services;
 using TaskFlow.Services.Notification.Extentions;
-using TaskFlow.Services.Notification.Handlers;
 using TaskFlow.Services.Notification.Infrastructure;
-using TaskFlow.Shared.Messaging.Events;
+using TaskFlow.Services.Notification.Middleware;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-string? connectionString = builder.Configuration.GetConnectionString("NotificationDatabase");
+string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Database connection string is not configured");
+}
+
 // Add services
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddHealthChecks();
 
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics => metrics
+        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("NotificationService"))
+        .AddAspNetCoreInstrumentation()
+        .AddPrometheusExporter());
+
+builder.Services.AddRabbitMQModuleWithHandlers(builder.Configuration);
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddDbContext<NotificationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddRabbitMQModuleWithHandlers(
-    builder.Configuration,
-    module =>
-    {
-        module.AddConsumer<TaskCreatedEvent, TaskCreatedHandler>(c =>
-        {
-            c.QueueName = "notification.task-created";
-            c.ExchangeName = "taskflow.events";
-            c.RoutingKey = "task.created";
-            c.PrefetchCount = 10;
-        });
-
-        module.AddConsumer<TaskAssignedEvent, TaskAssignedHandler>(c =>
-        {
-            c.QueueName = "notification.task-assigned";
-            c.ExchangeName = "taskflow.events";
-            c.RoutingKey = "task.assigned";
-            c.PrefetchCount = 10;
-        });
-
-        module.AddConsumer<TaskStatusChangedEvent, TaskStatusChangedHandler>(c =>
-        {
-            c.QueueName = "notification.task-status-changed";
-            c.ExchangeName = "taskflow.events";
-            c.RoutingKey = "task.status.changed";
-            c.PrefetchCount = 10;
-        });
-
-        _ = module.StartConsumersAsync();
-    });
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddHealthChecks();
 
 WebApplication app = builder.Build();
 app.Use(async (context, next) =>
@@ -69,23 +56,7 @@ app.Use(async (context, next) =>
     }
 });
 
-// Автоматическое применение миграций
-using (IServiceScope scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
-
-    try
-    {
-        app.Logger.LogInformation("Applying database migrations...");
-        dbContext.Database.Migrate();
-        app.Logger.LogInformation("Migrations applied successfully");
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogError(ex, "Failed to apply migrations");
-        throw; // хотим чтобы контейнер падал при ошибке
-    }
-}
+app.UseMigrations();
 
 if (app.Environment.IsDevelopment())
 {
@@ -93,8 +64,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
+var module = app.Services.GetRequiredService<MessagingModule>();
+await module.StartConsumersAsync();
+
+app.MapPrometheusScrapingEndpoint();
+app.Use(async (context, next) =>
+{
+    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation("Request: {Method} {Path}", context.Request.Method, context.Request.Path);
+    await next();
+    logger.LogInformation("Response: {StatusCode}", context.Response.StatusCode);
+});
+
 app.MapControllers();
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready");

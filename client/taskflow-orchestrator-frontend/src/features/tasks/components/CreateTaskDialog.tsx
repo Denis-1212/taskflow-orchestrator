@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCreateTask } from '../hooks/useTasks'
 import { useProjects } from '@/features/projects/hooks/useProjects'
-import { TaskPriority } from '../types/task.types'
+
 
 const createTaskSchema = z.object({
     projectId: z.string().min(1, 'Project is required'),

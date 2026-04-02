@@ -67,3 +67,11 @@ export function useUpdateProject() {
     },
   })
 }
+
+export function useProject(id: string) {
+  return useQuery({
+    queryKey: ['project', id],
+    queryFn: () => projectService.getProjectById(id),
+    enabled: !!id,
+  })
+}

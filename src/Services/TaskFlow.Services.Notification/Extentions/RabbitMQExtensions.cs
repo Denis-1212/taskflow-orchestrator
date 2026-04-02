@@ -1,7 +1,11 @@
 namespace TaskFlow.Services.Notification.Extentions;
 
+using Handlers;
+
 using RabbitMQ.Module;
 using RabbitMQ.Module.Deduplication;
+
+using Shared.Messaging.Events;
 
 public static class RabbitMQExtensions
 {
@@ -10,9 +14,12 @@ public static class RabbitMQExtensions
 
     public static IServiceCollection AddRabbitMQModuleWithHandlers(
         this IServiceCollection services,
-        IConfiguration configuration,
-        Action<MessagingModule> configureHandlers)
+        IConfiguration configuration)
     {
+        services.AddScoped<TaskCreatedHandler>();
+        services.AddScoped<TaskAssignedHandler>();
+        services.AddScoped<TaskStatusChangedHandler>();
+
         // Регистрируем модуль через фабрику, которая получит реальный ServiceProvider
         services.AddSingleton(sp =>
         {
@@ -36,13 +43,40 @@ public static class RabbitMQExtensions
                 sp);
 
             // Регистрируем потребителей
-            configureHandlers(module);
+            module.AddConsumer<TaskCreatedEvent, TaskCreatedHandler>(c =>
+            {
+                c.QueueName = "notification.task-created";
+                // c.ExchangeName = "taskflow.events";
+                // c.RoutingKey = "task.created";
+                c.PrefetchCount = 10;
+            });
+
+            module.AddConsumer<TaskAssignedEvent, TaskAssignedHandler>(c =>
+            {
+                c.QueueName = "notification.task-assigned-changed";
+                // c.ExchangeName = "taskflow.events";
+                // c.RoutingKey = "task.assigned";
+                c.PrefetchCount = 10;
+            });
+
+            module.AddConsumer<TaskStatusChangedEvent, TaskStatusChangedHandler>(c =>
+            {
+                c.QueueName = "notification.task-status-changed";
+                // c.ExchangeName = "taskflow.events";
+                // c.RoutingKey = "task.status.changed";
+                c.PrefetchCount = 10;
+            });
+
+            module.AddConsumer<TaskDeletedEvent, TaskDeletedHandler>(c =>
+            {
+                c.QueueName = "notification.task-deleted";
+                // c.ExchangeName = "taskflow.events";
+                // c.RoutingKey = "task.deleted";
+                c.PrefetchCount = 10;
+            });
 
             return module;
         });
-
-        // Регистрируем Publisher как Singleton
-        services.AddSingleton(sp => sp.GetRequiredService<MessagingModule>().CreatePublisher());
 
         return services;
     }

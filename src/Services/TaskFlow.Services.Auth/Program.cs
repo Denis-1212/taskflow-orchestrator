@@ -1,6 +1,7 @@
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -57,15 +58,17 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-string redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "redis:6379,password=taskflow123";
-builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-    ConnectionMultiplexer.Connect(redisConnectionString));
-
 builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-// Временная in-memory реализация (вместо Redis)
+
+// in-memory реализация (вместо Redis)
 // builder.Services.AddSingleton<IRefreshTokenService, InMemoryRefreshTokenService>();
+
+string redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? throw new InvalidOperationException();
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 // Add authentication
 string? jwtSecret = builder.Configuration["Jwt:Secret"];
 
@@ -104,42 +107,54 @@ builder.Services.AddOpenTelemetry()
 
 WebApplication app = builder.Build();
 
-app.Use(async (context, next) =>
+if (!app.Environment.IsDevelopment())
 {
-    try
+    app.UseExceptionHandler(errorApp =>
     {
-        await next();
-    }
-    catch (Exception ex)
-    {
-        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        logger.LogError(
-            ex,
-            "Unhandled exception occurred processing {Method} {Path}",
-            context.Request.Method,
-            context.Request.Path);
+        errorApp.Run(async context =>
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/problem+json";
 
-        throw;
-    }
-});
+            var exceptionHandler = context.Features.Get<IExceptionHandlerFeature>();
+            Exception? error = exceptionHandler?.Error;
 
-// Автоматическое применение миграций
-using (IServiceScope scope = app.Services.CreateScope())
+            var response = new
+            {
+                Title = "An error occurred",
+                Status = 500,
+                Detail = app.Environment.IsDevelopment() ? error?.Message : "Internal server error"
+            };
+
+            await context.Response.WriteAsJsonAsync(response);
+        });
+    });
+}
+
+if (app.Environment.IsDevelopment())
 {
+    // Автоматическое применение миграций
+    using IServiceScope scope = app.Services.CreateScope();
+
     var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
 
     try
     {
         app.Logger.LogInformation("Applying database migrations...");
-        dbContext.Database.Migrate();
+        await dbContext.Database.MigrateAsync();
         app.Logger.LogInformation("Migrations applied successfully");
     }
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "Failed to apply migrations");
-        throw; // хотим чтобы контейнер падал при ошибке
+        throw;
     }
 }
+
+app.UseHttpsRedirection();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
@@ -147,10 +162,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
-app.MapGrpcService<AuthGrpcService>();
 app.MapControllers();
+app.MapGrpcService<AuthGrpcService>();
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready");
 app.MapPrometheusScrapingEndpoint();

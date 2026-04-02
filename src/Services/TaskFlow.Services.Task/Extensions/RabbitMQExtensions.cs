@@ -10,10 +10,8 @@ public static class RabbitMQExtensions
 
     public static IServiceCollection AddRabbitMQModuleWithHandlers(
         this IServiceCollection services,
-        IConfiguration configuration,
-        Action<MessagingModule> configureHandlers)
+        IConfiguration configuration)
     {
-        // Регистрируем модуль через фабрику, которая получит реальный ServiceProvider
         services.AddSingleton(sp =>
         {
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
@@ -36,7 +34,7 @@ public static class RabbitMQExtensions
                 sp);
 
             // Регистрируем потребителей
-            configureHandlers(module);
+            // configureHandlers(module);
 
             return module;
         });

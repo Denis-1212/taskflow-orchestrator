@@ -2,6 +2,8 @@ namespace TaskFlow.Services.Project.Tests;
 
 using Application.Services;
 
+using Clients;
+
 using Domain;
 
 using FluentAssertions;
@@ -33,7 +35,8 @@ public class ProjectServiceTests : IDisposable
     {
         _context = TestDatabase.Create();
         var loggerMock = new Mock<ILogger<ProjectService>>();
-        _projectService = new ProjectService(_context, loggerMock.Object);
+        var authGrpcClientMock = new Mock<IAuthGrpcClient>();
+        _projectService = new ProjectService(_context, authGrpcClientMock.Object, loggerMock.Object);
     }
 
     #endregion

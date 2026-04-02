@@ -111,7 +111,7 @@ public class ProjectsController(IProjectService projectService) : ControllerBase
     {
         Guid userId = GetCurrentUserId();
 
-        Result<IEnumerable<ProjectMemberResult>> result = await projectService.GetProjectMembersAsync(id, userId);
+        Result<IEnumerable<ProjectMemberDto>> result = await projectService.GetProjectMembersAsync(id, userId);
 
         if (result.IsFailure)
         {
@@ -123,7 +123,7 @@ public class ProjectsController(IProjectService projectService) : ControllerBase
             };
         }
 
-        return Ok(result.Value.Select(MapToMemberDto));
+        return Ok(result);
     }
 
     [HttpPost("{id:guid}/members")]
@@ -210,14 +210,14 @@ public class ProjectsController(IProjectService projectService) : ControllerBase
             project.CreatedAt);
     }
 
-    private static ProjectMemberDto MapToMemberDto(ProjectMemberResult member)
-    {
-        return new ProjectMemberDto(
-            member.UserId,
-            string.Empty, // Email - будет подтягиваться из Auth Service при необходимости
-            string.Empty, // FullName - будет подтягиваться из Auth Service при необходимости
-            member.Role);
-    }
+    // private static ProjectMemberDto MapToMemberDto(ProjectMemberResult member)
+    // {
+    //     return new ProjectMemberDto(
+    //         member.UserId,
+    //         string.Empty, // Email - будет подтягиваться из Auth Service при необходимости
+    //         string.Empty, // FullName - будет подтягиваться из Auth Service при необходимости
+    //         member.Role);
+    // }
 
     private static ObjectResult Forbidden(Error error)
     {

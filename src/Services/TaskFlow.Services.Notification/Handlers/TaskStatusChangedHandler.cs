@@ -2,11 +2,13 @@ namespace TaskFlow.Services.Notification.Handlers;
 
 using Application.Services;
 
+using Domain;
+
 using RabbitMQ.Module.Contracts;
 
 using Shared.Messaging.Events;
 
-using Task = System.Threading.Tasks.Task;
+using Task = Task;
 
 public class TaskStatusChangedHandler(INotificationService notificationService, ILogger<TaskStatusChangedHandler> logger)
     : IMessageHandler<TaskStatusChangedEvent>
@@ -25,12 +27,10 @@ public class TaskStatusChangedHandler(INotificationService notificationService, 
         // Уведомление автору изменения
         await notificationService.CreateInAppNotificationAsync(
             message.ChangedBy,
-            "TaskStatusChanged",
+            NotificationType.TaskStatusChanged,
             $"Task Status Changed: {message.TaskTitle}",
             $"Task '{message.TaskTitle}' status changed from {message.OldStatus} to {message.NewStatus}",
             $"{{\"taskId\":\"{message.TaskId}\",\"projectId\":\"{message.ProjectId}\"}}");
-
-        await context.AckAsync(cancellationToken);
     }
 
     #endregion
