@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using TaskFlow.Services.Audit.Application.Services;
-using TaskFlow.Services.Audit.Extentions;
+using TaskFlow.Services.Audit.Extensions;
 using TaskFlow.Services.Audit.Handlers;
 using TaskFlow.Services.Audit.Infrastructure;
 using TaskFlow.Services.Audit.Services;
@@ -110,7 +110,7 @@ using (IServiceScope scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "Failed to apply migrations");
-        throw; // хотим чтобы контейнер падал при ошибке
+        throw;
     }
 }
 

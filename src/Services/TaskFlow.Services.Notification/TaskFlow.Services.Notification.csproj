@@ -9,12 +9,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="MailKit" Version="4.15.1"/>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.4"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
+        <PackageReference Include="MimeKit" Version="4.15.1"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4"/>
         <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.8.0-rc.1"/>
         <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.1"/>
@@ -25,6 +27,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.DTOs\TaskFlow.Shared.DTOs.csproj"/>
+        <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Grpc\TaskFlow.Shared.Grpc.csproj"/>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Kernel\TaskFlow.Shared.Kernel.csproj"/>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Messaging.RabbitMQ\TaskFlow.Shared.Messaging.RabbitMQ.csproj"/>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Messaging\TaskFlow.Shared.Messaging.csproj"/>

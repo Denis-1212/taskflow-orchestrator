@@ -6,9 +6,13 @@ using OpenTelemetry.Resources;
 using RabbitMQ.Module;
 
 using TaskFlow.Services.Notification.Application.Services;
-using TaskFlow.Services.Notification.Extentions;
+using TaskFlow.Services.Notification.Clients;
+using TaskFlow.Services.Notification.Extensions;
 using TaskFlow.Services.Notification.Infrastructure;
 using TaskFlow.Services.Notification.Middleware;
+using TaskFlow.Services.Notification.Services;
+using TaskFlow.Services.Notification.Settings;
+using TaskFlow.Services.Task.Clients;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -26,6 +30,11 @@ builder.Services.AddOpenTelemetry()
         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("NotificationService"))
         .AddAspNetCoreInstrumentation()
         .AddPrometheusExporter());
+
+builder.Services.AddScoped<IAuthGrpcClient, AuthGrpcClient>();
+
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddRabbitMQModuleWithHandlers(builder.Configuration);
 builder.Services.AddScoped<INotificationService, NotificationService>();

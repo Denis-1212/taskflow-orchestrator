@@ -4,6 +4,8 @@ using Auth;
 
 using Grpc.Net.Client;
 
+using Notification.Clients;
+
 public class AuthGrpcClient : IAuthGrpcClient
 {
 
