@@ -16,6 +16,7 @@ using Moq;
 using Shared.Kernel;
 
 using Notification = Domain.Notification;
+using Task = System.Threading.Tasks.Task;
 
 public class NotificationServiceTests : IDisposable
 {

@@ -33,13 +33,9 @@ public static class RabbitMQExtensions
                 loggerFactory,
                 sp);
 
-            // Регистрируем потребителей
-            // configureHandlers(module);
-
             return module;
         });
 
-        // Регистрируем Publisher как Singleton
         services.AddSingleton(sp => sp.GetRequiredService<MessagingModule>().CreatePublisher());
 
         return services;

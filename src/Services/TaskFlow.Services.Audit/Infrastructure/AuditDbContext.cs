@@ -4,21 +4,12 @@ using Domain;
 
 using Microsoft.EntityFrameworkCore;
 
-public class AuditDbContext : DbContext
+public class AuditDbContext(DbContextOptions<AuditDbContext> options) : DbContext(options)
 {
 
     #region Properties
 
     public DbSet<AuditLog> AuditLogs { get; set; }
-
-    #endregion
-
-    #region Constructors
-
-    public AuditDbContext(DbContextOptions<AuditDbContext> options)
-        : base(options)
-    {
-    }
 
     #endregion
 

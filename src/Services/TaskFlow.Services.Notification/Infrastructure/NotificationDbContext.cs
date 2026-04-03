@@ -4,21 +4,12 @@ using Domain;
 
 using Microsoft.EntityFrameworkCore;
 
-public class NotificationDbContext : DbContext
+public class NotificationDbContext(DbContextOptions<NotificationDbContext> options) : DbContext(options)
 {
 
     #region Properties
 
     public DbSet<Notification> Notifications { get; set; }
-
-    #endregion
-
-    #region Constructors
-
-    public NotificationDbContext(DbContextOptions<NotificationDbContext> options)
-        : base(options)
-    {
-    }
 
     #endregion
 

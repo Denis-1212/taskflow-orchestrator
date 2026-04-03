@@ -1,4 +1,4 @@
-namespace TaskFlow.Services.Notification.Extentions;
+namespace TaskFlow.Services.Notification.Extensions;
 
 using Handlers;
 

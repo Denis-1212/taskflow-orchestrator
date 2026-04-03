@@ -322,6 +322,7 @@ public class TaskService(
 
         // Получить информацию о пользователе
         GetUserResponse user = await authGrpcClient.GetUserAsync(changedBy);
+
         logger.LogWarning("Задача изменена пользователем {user.FullName}", user.FullName);
 
         if (!Enum.TryParse(status, true, out TaskItemStatus newStatus))
