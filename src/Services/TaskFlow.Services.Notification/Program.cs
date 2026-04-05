@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 
 using OpenTelemetry.Metrics;
@@ -9,12 +10,22 @@ using TaskFlow.Services.Notification.Application.Services;
 using TaskFlow.Services.Notification.Clients;
 using TaskFlow.Services.Notification.Extensions;
 using TaskFlow.Services.Notification.Infrastructure;
-using TaskFlow.Services.Notification.Middleware;
 using TaskFlow.Services.Notification.Services;
 using TaskFlow.Services.Notification.Settings;
-using TaskFlow.Services.Task.Clients;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+int restPort = builder.Configuration.GetValue("Ports:Rest", 5004);
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(
+        restPort,
+        listenOptions =>
+        {
+            listenOptions.Protocols = HttpProtocols.Http1;
+        });
+});
+
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 if (string.IsNullOrEmpty(connectionString))

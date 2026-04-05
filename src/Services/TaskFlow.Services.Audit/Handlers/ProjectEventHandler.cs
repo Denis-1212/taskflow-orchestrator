@@ -4,21 +4,15 @@ using System.Text.Json;
 
 using Application.Services;
 
+using Domain;
+
 using RabbitMQ.Module.Contracts;
 
 using Shared.Messaging.Events;
 
-public class ProjectCreatedHandler : BaseAuditHandler, IMessageHandler<ProjectCreatedEvent>
+public class ProjectCreatedHandler(IAuditService auditService, ILogger<ProjectCreatedHandler> logger)
+    : BaseAuditHandler(auditService, logger), IMessageHandler<ProjectCreatedEvent>
 {
-
-    #region Constructors
-
-    public ProjectCreatedHandler(IAuditService auditService, ILogger<ProjectCreatedHandler> logger)
-        : base(auditService, logger)
-    {
-    }
-
-    #endregion
 
     #region Methods
 
@@ -29,8 +23,8 @@ public class ProjectCreatedHandler : BaseAuditHandler, IMessageHandler<ProjectCr
         await LogAuditAsync(
             message.OwnerId,
             null,
-            "CREATE",
-            "Project",
+            AuditAction.Create,
+            EntityType.Project,
             message.ProjectId.ToString(),
             null,
             JsonSerializer.Serialize(message),
@@ -42,17 +36,9 @@ public class ProjectCreatedHandler : BaseAuditHandler, IMessageHandler<ProjectCr
 
 }
 
-public class UserAddedToProjectHandler : BaseAuditHandler, IMessageHandler<UserAddedToProjectEvent>
+public class UserAddedToProjectHandler(IAuditService auditService, ILogger<UserAddedToProjectHandler> logger)
+    : BaseAuditHandler(auditService, logger), IMessageHandler<UserAddedToProjectEvent>
 {
-
-    #region Constructors
-
-    public UserAddedToProjectHandler(IAuditService auditService, ILogger<UserAddedToProjectHandler> logger)
-        : base(auditService, logger)
-    {
-    }
-
-    #endregion
 
     #region Methods
 
@@ -63,8 +49,8 @@ public class UserAddedToProjectHandler : BaseAuditHandler, IMessageHandler<UserA
         await LogAuditAsync(
             message.AddedBy,
             null,
-            "ADD_MEMBER",
-            "Project",
+            AuditAction.AddMember,
+            EntityType.Project,
             message.ProjectId.ToString(),
             null,
             JsonSerializer.Serialize(message),

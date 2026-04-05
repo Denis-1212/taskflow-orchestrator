@@ -28,10 +28,11 @@ public class TaskService(
 
     #region Constants
 
-    private const string TASK_CREATED_ROUTING_KEY = "notification.task-created";
-    private const string TASK_STATUS_CHANGED_ROUTING_KEY = "notification.task-status-changed";
-    private const string TASK_DELETED_ROUTING_KEY = "notification.task-deleted";
-    private const string TASK_ASSIGNED_CHANGED_ROUTING_KEY = "notification.task-assigned-changed";
+    private const string EXCHANGE_NAME = "taskflow.events";
+    private const string TASK_CREATED_ROUTING_KEY = "task.created";
+    private const string TASK_STATUS_CHANGED_ROUTING_KEY = "task.status.changed";
+    private const string TASK_DELETED_ROUTING_KEY = " task.deleted";
+    private const string TASK_ASSIGNED_CHANGED_ROUTING_KEY = "task.assigned";
 
     #endregion
 
@@ -100,6 +101,7 @@ public class TaskService(
             taskCreatedEvent,
             c =>
             {
+                c.WithExchange(EXCHANGE_NAME);
                 c.WithRoutingKey(TASK_CREATED_ROUTING_KEY);
             });
 
@@ -184,6 +186,7 @@ public class TaskService(
             taskDeletedEvent,
             c =>
             {
+                c.WithExchange(EXCHANGE_NAME);
                 c.WithRoutingKey(TASK_DELETED_ROUTING_KEY);
             });
 
@@ -306,6 +309,7 @@ public class TaskService(
             taskAssignedEvent,
             c =>
             {
+                c.WithExchange(EXCHANGE_NAME);
                 c.WithRoutingKey(TASK_ASSIGNED_CHANGED_ROUTING_KEY);
             });
 
@@ -373,6 +377,7 @@ public class TaskService(
             statusChangedEvent,
             c =>
             {
+                c.WithExchange(EXCHANGE_NAME);
                 c.WithRoutingKey(TASK_STATUS_CHANGED_ROUTING_KEY);
             });
 

@@ -1,4 +1,4 @@
-namespace TaskFlow.Services.Task.Extensions;
+namespace TaskFlow.Services.Auth.Extensions;
 
 using RabbitMQ.Module;
 using RabbitMQ.Module.Deduplication;

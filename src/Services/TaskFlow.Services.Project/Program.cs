@@ -8,8 +8,8 @@ using Serilog;
 
 using TaskFlow.Services.Project.Application.Services;
 using TaskFlow.Services.Project.Clients;
+using TaskFlow.Services.Project.Extensions;
 using TaskFlow.Services.Project.Infrastructure;
-using TaskFlow.Services.Project.Middleware;
 using TaskFlow.Services.Project.Services;
 
 Log.Logger = new LoggerConfiguration()
@@ -23,27 +23,27 @@ try
 {
     AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
     WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-
+    int restPort = builder.Configuration.GetValue("Ports:Rest", 5002);
+    int grpcPort = builder.Configuration.GetValue("Ports:Grpc", 5006);
     builder.WebHost.ConfigureKestrel(options =>
     {
         // REST API на HTTP/1.1
-        options.ListenLocalhost(
-            5002,
+        options.ListenAnyIP(
+            restPort,
             listenOptions =>
             {
                 listenOptions.Protocols = HttpProtocols.Http1;
             });
 
         // gRPC на HTTP/2
-        options.ListenLocalhost(
-            5006,
+        options.ListenAnyIP(
+            grpcPort,
             listenOptions =>
             {
                 listenOptions.Protocols = HttpProtocols.Http2;
             });
     });
 
-    // Add services
     builder.Host.UseSerilog();
     builder.Services.AddControllers();
 
@@ -65,6 +65,7 @@ try
     builder.Services.AddDbContext<ProjectDbContext>(options =>
         options.UseNpgsql(connectionString));
 
+    builder.Services.AddRabbitMQModule(builder.Configuration);
     builder.Services.AddGrpc();
     builder.Services.AddScoped<IProjectService, ProjectService>();
 

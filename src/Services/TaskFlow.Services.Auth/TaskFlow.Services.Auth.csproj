@@ -32,6 +32,8 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.DTOs\TaskFlow.Shared.DTOs.csproj"/>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Grpc\TaskFlow.Shared.Grpc.csproj"/>
+        <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Messaging.RabbitMQ\TaskFlow.Shared.Messaging.RabbitMQ.csproj"/>
+        <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Messaging\TaskFlow.Shared.Messaging.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 
 using OpenTelemetry.Metrics;
@@ -20,6 +21,17 @@ Log.Logger = new LoggerConfiguration()
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+int restPort = builder.Configuration.GetValue("Ports:Rest", 5003);
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(
+        restPort,
+        listenOptions =>
+        {
+            listenOptions.Protocols = HttpProtocols.Http1;
+        });
+});
+
 // Add services
 builder.Host.UseSerilog();
 builder.Services.AddControllers();
@@ -29,7 +41,6 @@ builder.Services.AddOpenTelemetry()
         .AddAspNetCoreInstrumentation()
         .AddPrometheusExporter());
 
-// Register gRPC clients
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAuthGrpcClient, AuthGrpcClient>();
 builder.Services.AddScoped<IProjectGrpcClient, ProjectGrpcClient>();
@@ -38,7 +49,7 @@ builder.Services.AddDbContext<TaskDbContext>(options =>
 
 builder.Services.AddHostedService<OutboxProcessorService>();
 
-builder.Services.AddRabbitMQModuleWithHandlers(builder.Configuration);
+builder.Services.AddRabbitMQModule(builder.Configuration);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

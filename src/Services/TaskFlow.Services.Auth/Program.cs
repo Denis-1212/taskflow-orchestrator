@@ -13,6 +13,7 @@ using Serilog;
 using StackExchange.Redis;
 
 using TaskFlow.Services.Auth.Application.Services;
+using TaskFlow.Services.Auth.Extensions;
 using TaskFlow.Services.Auth.Infrastructure;
 using TaskFlow.Services.Auth.Services;
 
@@ -26,19 +27,21 @@ Log.Logger = new LoggerConfiguration()
 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+int restPort = builder.Configuration.GetValue("Ports:Rest", 5001);
+int grpcPort = builder.Configuration.GetValue("Ports:Grpc", 5007);
 builder.WebHost.ConfigureKestrel(options =>
 {
     // REST API
-    options.ListenLocalhost(
-        5001,
+    options.ListenAnyIP(
+        restPort,
         listenOptions =>
         {
             listenOptions.Protocols = HttpProtocols.Http1;
         });
 
     // gRPC
-    options.ListenLocalhost(
-        5007,
+    options.ListenAnyIP(
+        grpcPort,
         listenOptions =>
         {
             listenOptions.Protocols = HttpProtocols.Http2;
@@ -66,7 +69,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 string redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? throw new InvalidOperationException();
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
-
+builder.Services.AddRabbitMQModule(builder.Configuration);
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add authentication

@@ -4,6 +4,8 @@ using System.Security.Claims;
 
 using Microsoft.Extensions.Primitives;
 
+using Task = Task;
+
 public class UserIdMiddleware(RequestDelegate next, ILogger<UserIdMiddleware> logger)
 {
 

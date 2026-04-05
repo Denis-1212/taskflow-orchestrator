@@ -6,6 +6,6 @@ RUN dotnet publish src/Services/TaskFlow.Services.Audit/TaskFlow.Services.Audit.
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 5005 5010
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "TaskFlow.Services.Audit.dll"]
