@@ -52,8 +52,8 @@ public class AuditServiceTests : IDisposable
         // Arrange
         var userId = Guid.NewGuid();
         string userEmail = "user@example.com";
-        string action = "CREATE";
-        string entityType = "Task";
+        var action = AuditAction.Create;
+        var entityType = EntityType.Task;
         string entityId = Guid.NewGuid().ToString();
         string? oldValue = null;
         string newValue = "{\"title\":\"Test\"}";
@@ -70,7 +70,8 @@ public class AuditServiceTests : IDisposable
                             oldValue,
                             newValue,
                             ipAddress,
-                            userAgent);
+                            userAgent,
+                            CancellationToken.None);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -79,8 +80,8 @@ public class AuditServiceTests : IDisposable
         log.Should().NotBeNull();
         log!.UserId.Should().Be(userId);
         log.UserEmail.Should().Be(userEmail);
-        log.Action.Should().Be(action);
-        log.EntityType.Should().Be(entityType);
+        log.Action.Should().Be(action.ToString());
+        log.EntityType.Should().Be(entityType.ToString());
         log.EntityId.Should().Be(entityId);
         log.NewValue.Should().Be(newValue);
         log.IpAddress.Should().Be(ipAddress);
@@ -92,8 +93,8 @@ public class AuditServiceTests : IDisposable
     {
         // Arrange
         string userEmail = "system@example.com";
-        string action = "SYSTEM";
-        string entityType = "Config";
+        var action = AuditAction.Create;
+        var entityType = EntityType.User;
         string entityId = "1";
         string ipAddress = "127.0.0.1";
         string userAgent = "system";
@@ -108,7 +109,8 @@ public class AuditServiceTests : IDisposable
                             null,
                             null,
                             ipAddress,
-                            userAgent);
+                            userAgent,
+                            CancellationToken.None);
 
         // Assert
         result.IsSuccess.Should().BeTrue();

@@ -1,9 +1,6 @@
 networks:
   taskflow-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
 
 services:
   # ==================== Databases ====================
@@ -19,8 +16,7 @@ services:
     volumes:
       - auth-db-data:/var/lib/postgresql/data
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.2
+      - taskflow-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U taskflow -d auth_db"]
       interval: 10s
@@ -39,8 +35,7 @@ services:
     volumes:
       - project-db-data:/var/lib/postgresql/data
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.3
+      - taskflow-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U taskflow -d project_db"]
       interval: 10s
@@ -59,8 +54,7 @@ services:
     volumes:
       - task-db-data:/var/lib/postgresql/data
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.4
+      - taskflow-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U taskflow -d task_db"]
       interval: 10s
@@ -79,8 +73,7 @@ services:
     volumes:
       - notification-db-data:/var/lib/postgresql/data
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.5
+      - taskflow-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U taskflow -d notification_db"]
       interval: 10s
@@ -99,8 +92,7 @@ services:
     volumes:
       - audit-db-data:/var/lib/postgresql/data
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.6
+      - taskflow-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U taskflow -d audit_db"]
       interval: 10s
@@ -117,8 +109,7 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.7
+      - taskflow-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -137,8 +128,7 @@ services:
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.8
+      - taskflow-network
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 30s
@@ -156,9 +146,8 @@ services:
     volumes:
       - seq-data:/data
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.20
-
+      - taskflow-network
+    
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: taskflow-jaeger
@@ -169,8 +158,8 @@ services:
       - "4317:4317"
       - "4318:4318"
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.21
+      - taskflow-network
+
 
   prometheus:
     image: prom/prometheus:latest
@@ -184,8 +173,7 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.22
+      - taskflow-network
 
   grafana:
     image: grafana/grafana:latest
@@ -199,8 +187,7 @@ services:
       - grafana-data:/var/lib/grafana
       - ./deployments/monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.23
+      - taskflow-network
     depends_on:
       - prometheus
 
@@ -211,19 +198,24 @@ services:
       dockerfile: src/Services/TaskFlow.Services.Auth/Dockerfile
     container_name: taskflow-auth-service
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development  #  Production
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=172.20.0.2;Port=5432;Database=auth_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
+      - ASPNETCORE_ENVIRONMENT=Production     
+      - ConnectionStrings__DefaultConnection=Host=auth-db;Port=5432;Database=auth_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
       - Jwt__Secret=${JWT_SECRET}
       - Jwt__Issuer=TaskFlow
       - Jwt__Audience=TaskFlow
       - Jwt__AccessTokenExpirationMinutes=3
-      - Redis__ConnectionString=172.20.0.7:6379,password=${REDIS_PASSWORD:-taskflow123}
+      - ConnectionStrings__Redis=redis,password=${REDIS_PASSWORD:-taskflow123}
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=taskflow
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-taskflow123}
+      - RabbitMQ__VirtualHost=/
+      - Ports__Rest=5001
+      - Ports__Grpc=5007
     ports:
-      - "5001:8080"
+      - "5001:5001"
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.10
+      - taskflow-network
     depends_on:
       auth-db:
         condition: service_healthy
@@ -236,15 +228,19 @@ services:
       dockerfile: src/Services/TaskFlow.Services.Project/Dockerfile
     container_name: taskflow-project-service
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=172.20.0.3;Port=5432;Database=project_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
-      - Grpc__AuthService=http://172.20.0.10:8080
+      - ASPNETCORE_ENVIRONMENT=Production    
+      - ConnectionStrings__DefaultConnection=Host=project-db;Port=5432;Database=project_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=taskflow
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-taskflow123}
+      - RabbitMQ__VirtualHost=/    
+      - Ports__Rest=5002
+      - Ports__Grpc=5006
     ports:
-      - "5002:8080"
+      - "5002:5002"
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.11
+      - taskflow-network
     depends_on:
       project-db:
         condition: service_healthy
@@ -256,20 +252,17 @@ services:
     container_name: taskflow-task-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=172.20.0.4;Port=5432;Database=task_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
-      - Grpc__AuthService=http://172.20.0.10:8080
-      - Grpc__ProjectService=http://172.20.0.11:8080
-      - RabbitMQ__Host=172.20.0.8
+      - ConnectionStrings__DefaultConnection=Host=task-db;Port=5432;Database=task_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
+      - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__Username=taskflow
       - RabbitMQ__Password=${RABBITMQ_PASSWORD:-taskflow123}
       - RabbitMQ__VirtualHost=/
+      - Ports__Rest=5003
     ports:
-      - "5003:8080"
+      - "5003:5003"
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.12
+      - taskflow-network
     depends_on:
       task-db:
         condition: service_healthy
@@ -283,18 +276,17 @@ services:
     container_name: taskflow-notification-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__NotificationDatabase=Host=172.20.0.5;Port=5432;Database=notification_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
-      - RabbitMQ__Host=172.20.0.8
+      - ConnectionStrings__DefaultConnection=Host=notification-db;Port=5432;Database=notification_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
+      - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__Username=taskflow
       - RabbitMQ__Password=${RABBITMQ_PASSWORD:-taskflow123}
       - RabbitMQ__VirtualHost=/
+      - Ports__Rest=5004
     ports:
-      - "5004:8080"
+      - "5004:5004"
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.13
+      - taskflow-network
     depends_on:
       notification-db:
         condition: service_healthy
@@ -308,18 +300,17 @@ services:
     container_name: taskflow-audit-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__AuditDatabase=Host=172.20.0.6;Port=5432;Database=audit_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
-      - RabbitMQ__Host=172.20.0.8
+      - ConnectionStrings__DefaultConnection=Host=audit-db;Port=5432;Database=audit_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
+      - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__Username=taskflow
       - RabbitMQ__Password=${RABBITMQ_PASSWORD:-taskflow123}
       - RabbitMQ__VirtualHost=/
+      - Ports__Rest=5005
     ports:
-      - "5005:8080"
+      - "5005:5005"
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.14
+      - taskflow-network
     depends_on:
       audit-db:
         condition: service_healthy
@@ -341,8 +332,7 @@ services:
     ports:
       - "8080:8080"
     networks:
-      taskflow-network:
-        ipv4_address: 172.20.0.15
+      - taskflow-network
     depends_on:
       - auth-service
       - project-service

@@ -1,10 +1,8 @@
-namespace TaskFlow.Services.Task.Clients;
+namespace TaskFlow.Services.Notification.Clients;
 
 using Auth;
 
 using Grpc.Net.Client;
-
-using Notification.Clients;
 
 public class AuthGrpcClient : IAuthGrpcClient
 {

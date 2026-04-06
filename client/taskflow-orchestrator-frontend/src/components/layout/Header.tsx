@@ -1,7 +1,8 @@
 import React from 'react'
-import { Bell, Moon, Sun, LogOut } from 'lucide-react'
+import { Moon, Sun, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/features/auth/store/authStore'
+import { NotificationBell } from '@/features/notifications/components/NotificationBell'
 
 export function Header() {
   const [theme, setTheme] = React.useState<'dark' | 'light'>('light')
@@ -27,7 +28,7 @@ export function Header() {
 
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon">
-          <Bell className="h-5 w-5" />
+          <NotificationBell />
         </Button>
 
         <Button variant="ghost" size="icon" onClick={toggleTheme}>

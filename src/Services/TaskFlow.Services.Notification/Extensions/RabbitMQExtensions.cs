@@ -10,6 +10,20 @@ using Shared.Messaging.Events;
 public static class RabbitMQExtensions
 {
 
+    #region Constants
+
+    private const string TASK_CREATED_QUEUE_NAME = "notification.task-created";
+    private const string TASK_ASSIGNED_CHANGED_QUEUE_NAME = "notification.task-assigned-changed";
+    private const string TASK_STATUS_CHANGED_QUEUE_NAME = "notification.task-status-changed";
+    private const string TASK_DELETED_QUEUE_NAME = "notification.task-deleted";
+    private const string EXCHANGE_NAME = "taskflow.events";
+    private const string TASK_CREATED_ROUTING_KEY = "task.created";
+    private const string TASK_STATUS_CHANGED_ROUTING_KEY = "task.status.changed";
+    private const string TASK_DELETED_ROUTING_KEY = " task.deleted";
+    private const string TASK_ASSIGNED_CHANGED_ROUTING_KEY = "task.assigned";
+
+    #endregion
+
     #region Methods
 
     public static IServiceCollection AddRabbitMQModuleWithHandlers(
@@ -20,7 +34,6 @@ public static class RabbitMQExtensions
         services.AddScoped<TaskAssignedHandler>();
         services.AddScoped<TaskStatusChangedHandler>();
 
-        // Регистрируем модуль через фабрику, которая получит реальный ServiceProvider
         services.AddSingleton(sp =>
         {
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
@@ -45,33 +58,33 @@ public static class RabbitMQExtensions
             // Регистрируем потребителей
             module.AddConsumer<TaskCreatedEvent, TaskCreatedHandler>(c =>
             {
-                c.QueueName = "notification.task-created";
-                // c.ExchangeName = "taskflow.events";
-                // c.RoutingKey = "task.created";
+                c.QueueName = TASK_CREATED_QUEUE_NAME;
+                c.ExchangeName = EXCHANGE_NAME;
+                c.RoutingKey = TASK_CREATED_ROUTING_KEY;
                 c.PrefetchCount = 10;
             });
 
             module.AddConsumer<TaskAssignedEvent, TaskAssignedHandler>(c =>
             {
-                c.QueueName = "notification.task-assigned-changed";
-                // c.ExchangeName = "taskflow.events";
-                // c.RoutingKey = "task.assigned";
+                c.QueueName = TASK_ASSIGNED_CHANGED_QUEUE_NAME;
+                c.ExchangeName = EXCHANGE_NAME;
+                c.RoutingKey = TASK_ASSIGNED_CHANGED_ROUTING_KEY;
                 c.PrefetchCount = 10;
             });
 
             module.AddConsumer<TaskStatusChangedEvent, TaskStatusChangedHandler>(c =>
             {
-                c.QueueName = "notification.task-status-changed";
-                // c.ExchangeName = "taskflow.events";
-                // c.RoutingKey = "task.status.changed";
+                c.QueueName = TASK_STATUS_CHANGED_QUEUE_NAME;
+                c.ExchangeName = EXCHANGE_NAME;
+                c.RoutingKey = TASK_STATUS_CHANGED_ROUTING_KEY;
                 c.PrefetchCount = 10;
             });
 
             module.AddConsumer<TaskDeletedEvent, TaskDeletedHandler>(c =>
             {
-                c.QueueName = "notification.task-deleted";
-                // c.ExchangeName = "taskflow.events";
-                // c.RoutingKey = "task.deleted";
+                c.QueueName = TASK_DELETED_QUEUE_NAME;
+                c.ExchangeName = EXCHANGE_NAME;
+                c.RoutingKey = TASK_DELETED_ROUTING_KEY;
                 c.PrefetchCount = 10;
             });
 

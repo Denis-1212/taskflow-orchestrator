@@ -8,7 +8,7 @@ public static class RabbitMQExtensions
 
     #region Methods
 
-    public static IServiceCollection AddRabbitMQModuleWithHandlers(
+    public static IServiceCollection AddRabbitMQModule(
         this IServiceCollection services,
         IConfiguration configuration)
     {

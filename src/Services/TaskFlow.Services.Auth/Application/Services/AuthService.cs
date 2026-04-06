@@ -8,16 +8,27 @@ using Infrastructure;
 
 using Microsoft.EntityFrameworkCore;
 
+using RabbitMQ.Module.Contracts;
+
 using Shared.Kernel;
+using Shared.Messaging.Events;
 
 public class AuthService(
     AuthDbContext context,
     IJwtService jwtService,
     IRefreshTokenService refreshTokenService,
     IPasswordHasher passwordHasher,
+    IPublisher publisher,
     ILogger<AuthService> logger)
     : IAuthService
 {
+
+    #region Constants
+
+    private const string USER_REGISTERED_ROUTING_KEY = "user.registered";
+    private const string EXCHANGE_NAME = "taskflow.events";
+
+    #endregion
 
     #region Methods
 
@@ -69,6 +80,21 @@ public class AuthService(
             user.Id,
             ipAddress,
             TimeSpan.FromDays(7));
+
+        var userRegisteredEvent = new UserRegisteredEvent
+        {
+            UserId = user.Id,
+            Email = email,
+            FullName = fullName
+        };
+
+        await publisher.PublishAsync(
+            userRegisteredEvent,
+            c =>
+            {
+                c.WithExchange(EXCHANGE_NAME);
+                c.WithRoutingKey(USER_REGISTERED_ROUTING_KEY);
+            });
 
         logger.LogInformation("User {UserId} registered successfully", user.Id);
 

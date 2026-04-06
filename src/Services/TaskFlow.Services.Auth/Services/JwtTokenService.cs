@@ -1,4 +1,4 @@
-namespace TaskFlow.Services.Auth.Infrastructure;
+namespace TaskFlow.Services.Auth.Services;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;

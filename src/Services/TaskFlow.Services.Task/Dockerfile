@@ -6,6 +6,6 @@ RUN dotnet publish src/Services/TaskFlow.Services.Task/TaskFlow.Services.Task.cs
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 5003 5008
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "TaskFlow.Services.Task.dll"]

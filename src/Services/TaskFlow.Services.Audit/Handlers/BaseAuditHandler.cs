@@ -2,6 +2,8 @@ namespace TaskFlow.Services.Audit.Handlers;
 
 using Application.Services;
 
+using Domain;
+
 using RabbitMQ.Module.Contracts;
 
 public abstract class BaseAuditHandler(IAuditService auditService, ILogger logger)
@@ -19,8 +21,8 @@ public abstract class BaseAuditHandler(IAuditService auditService, ILogger logge
     protected async Task LogAuditAsync(
         Guid? userId,
         string? userEmail,
-        string action,
-        string entityType,
+        AuditAction action,
+        EntityType entityType,
         string entityId,
         string? oldValue,
         string? newValue,
@@ -41,9 +43,8 @@ public abstract class BaseAuditHandler(IAuditService auditService, ILogger logge
             oldValue,
             newValue,
             ipAddress,
-            userAgent);
-
-        await context.AckAsync(cancellationToken);
+            userAgent,
+            cancellationToken);
     }
 
     #endregion

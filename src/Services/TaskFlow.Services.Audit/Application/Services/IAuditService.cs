@@ -1,5 +1,7 @@
 namespace TaskFlow.Services.Audit.Application.Services;
 
+using Domain;
+
 using Shared.Kernel;
 
 public interface IAuditService
@@ -10,13 +12,14 @@ public interface IAuditService
     Task<Result> LogAsync(
         Guid? userId,
         string userEmail,
-        string action,
-        string entityType,
+        AuditAction action,
+        EntityType entityType,
         string entityId,
         string? oldValue,
         string? newValue,
         string ipAddress,
-        string userAgent);
+        string userAgent,
+        CancellationToken token);
 
     Task<Result<IEnumerable<AuditLogResult>>> SearchAsync(
         Guid? userId,

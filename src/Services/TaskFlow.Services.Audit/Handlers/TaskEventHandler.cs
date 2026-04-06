@@ -4,21 +4,15 @@ using System.Text.Json;
 
 using Application.Services;
 
+using Domain;
+
 using RabbitMQ.Module.Contracts;
 
 using Shared.Messaging.Events;
 
-public class TaskCreatedHandler : BaseAuditHandler, IMessageHandler<TaskCreatedEvent>
+public class TaskCreatedHandler(IAuditService auditService, ILogger<TaskCreatedHandler> logger)
+    : BaseAuditHandler(auditService, logger), IMessageHandler<TaskCreatedEvent>
 {
-
-    #region Constructors
-
-    public TaskCreatedHandler(IAuditService auditService, ILogger<TaskCreatedHandler> logger)
-        : base(auditService, logger)
-    {
-    }
-
-    #endregion
 
     #region Methods
 
@@ -29,8 +23,8 @@ public class TaskCreatedHandler : BaseAuditHandler, IMessageHandler<TaskCreatedE
         await LogAuditAsync(
             message.CreatedBy,
             null,
-            "CREATE",
-            "Task",
+            AuditAction.Create,
+            EntityType.Task,
             message.TaskId.ToString(),
             null,
             JsonSerializer.Serialize(message),
@@ -42,17 +36,9 @@ public class TaskCreatedHandler : BaseAuditHandler, IMessageHandler<TaskCreatedE
 
 }
 
-public class TaskAssignedHandler : BaseAuditHandler, IMessageHandler<TaskAssignedEvent>
+public class TaskAssignedHandler(IAuditService auditService, ILogger<TaskAssignedHandler> logger)
+    : BaseAuditHandler(auditService, logger), IMessageHandler<TaskAssignedEvent>
 {
-
-    #region Constructors
-
-    public TaskAssignedHandler(IAuditService auditService, ILogger<TaskAssignedHandler> logger)
-        : base(auditService, logger)
-    {
-    }
-
-    #endregion
 
     #region Methods
 
@@ -63,8 +49,8 @@ public class TaskAssignedHandler : BaseAuditHandler, IMessageHandler<TaskAssigne
         await LogAuditAsync(
             message.AssignedBy,
             null,
-            "ASSIGN",
-            "Task",
+            AuditAction.Assign,
+            EntityType.Task,
             message.TaskId.ToString(),
             null,
             JsonSerializer.Serialize(message),
@@ -76,17 +62,9 @@ public class TaskAssignedHandler : BaseAuditHandler, IMessageHandler<TaskAssigne
 
 }
 
-public class TaskStatusChangedHandler : BaseAuditHandler, IMessageHandler<TaskStatusChangedEvent>
+public class TaskStatusChangedHandler(IAuditService auditService, ILogger<TaskStatusChangedHandler> logger)
+    : BaseAuditHandler(auditService, logger), IMessageHandler<TaskStatusChangedEvent>
 {
-
-    #region Constructors
-
-    public TaskStatusChangedHandler(IAuditService auditService, ILogger<TaskStatusChangedHandler> logger)
-        : base(auditService, logger)
-    {
-    }
-
-    #endregion
 
     #region Methods
 
@@ -101,11 +79,40 @@ public class TaskStatusChangedHandler : BaseAuditHandler, IMessageHandler<TaskSt
         await LogAuditAsync(
             message.ChangedBy,
             null,
-            "STATUS_CHANGE",
-            "Task",
+            AuditAction.StatusChange,
+            EntityType.Task,
             message.TaskId.ToString(),
             message.OldStatus,
             message.NewStatus,
+            context,
+            cancellationToken);
+    }
+
+    #endregion
+
+}
+
+public class TaskDeletedHandler(IAuditService auditService, ILogger<TaskAssignedHandler> logger)
+    : BaseAuditHandler(auditService, logger), IMessageHandler<TaskDeletedEvent>
+{
+
+    #region Methods
+
+    public async Task HandleAsync(TaskDeletedEvent message, IMessageContext context, CancellationToken cancellationToken)
+    {
+        logger.LogInformation(
+            "Processing TaskDeleted event for Task {TaskId} by User {DeletedBy}",
+            message.TaskId,
+            message.DeletedBy);
+
+        await LogAuditAsync(
+            message.DeletedBy,
+            null,
+            AuditAction.Create,
+            EntityType.Task,
+            message.TaskId.ToString(),
+            null,
+            JsonSerializer.Serialize(message),
             context,
             cancellationToken);
     }

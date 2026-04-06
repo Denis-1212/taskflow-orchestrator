@@ -69,35 +69,42 @@ public class OutboxProcessorService(
 
         logger.LogInformation("Processing {Count} outbox messages", messages.Count);
 
-        foreach (OutboxMessage message in messages)
+        try
         {
-            try
+            foreach (OutboxMessage message in messages)
             {
-                await PublishMessageAsync(message, publisher, cancellationToken);
-
-                message.MarkProcessed();
-                await context.SaveChangesAsync(cancellationToken);
-
-                logger.LogDebug(
-                    "Published outbox message {MessageId} of type {EventType}",
-                    message.Id,
-                    message.EventType);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to publish outbox message {MessageId}", message.Id);
-
-                message.IncrementRetry(ex.Message);
-                await context.SaveChangesAsync(cancellationToken);
-
-                if (!message.CanRetry(_maxRetryCount))
+                try
                 {
-                    logger.LogWarning(
-                        "Outbox message {MessageId} reached max retry count, moving to dead letter",
-                        message.Id);
-                    // Optionally move to dead letter table or mark with error
+                    await PublishMessageAsync(message, publisher, cancellationToken);
+
+                    message.MarkProcessed();
+
+                    logger.LogDebug(
+                        "Published outbox message {MessageId} of type {EventType}",
+                        message.Id,
+                        message.EventType);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to publish outbox message {MessageId}", message.Id);
+
+                    message.IncrementRetry(ex.Message);
+
+                    if (!message.CanRetry(_maxRetryCount))
+                    {
+                        logger.LogWarning(
+                            "Outbox message {MessageId} reached max retry count, moving to dead letter",
+                            message.Id);
+                    }
                 }
             }
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to save outbox message states");
+            throw;
         }
     }
 

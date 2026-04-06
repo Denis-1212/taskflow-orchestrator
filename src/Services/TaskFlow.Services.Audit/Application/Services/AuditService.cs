@@ -1,5 +1,7 @@
 namespace TaskFlow.Services.Audit.Application.Services;
 
+using System.Text.Json;
+
 using Domain;
 
 using Infrastructure;
@@ -8,40 +10,24 @@ using Microsoft.EntityFrameworkCore;
 
 using Shared.Kernel;
 
-public class AuditService : IAuditService
+public class AuditService(AuditDbContext context, ILogger<AuditService> logger) : IAuditService
 {
-
-    #region Fields
-
-    private readonly AuditDbContext _context;
-    private readonly ILogger<AuditService> _logger;
-
-    #endregion
-
-    #region Constructors
-
-    public AuditService(AuditDbContext context, ILogger<AuditService> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
-
-    #endregion
 
     #region Methods
 
     public async Task<Result> LogAsync(
         Guid? userId,
         string userEmail,
-        string action,
-        string entityType,
+        AuditAction action,
+        EntityType entityType,
         string entityId,
         string? oldValue,
         string? newValue,
         string ipAddress,
-        string userAgent)
+        string userAgent,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation(
+        logger.LogInformation(
             "Logging audit: {Action} on {EntityType} {EntityId} by {UserEmail}",
             action,
             entityType,
@@ -51,16 +37,16 @@ public class AuditService : IAuditService
         var auditLog = new AuditLog(
             userId,
             userEmail,
-            action,
-            entityType,
+            action.ToString().ToUpperInvariant(),
+            entityType.ToString().ToUpperInvariant(),
             entityId,
-            oldValue,
-            newValue,
+            oldValue != null ? JsonSerializer.Serialize(oldValue) : null,
+            newValue != null ? JsonSerializer.Serialize(newValue) : null,
             ipAddress,
             userAgent);
 
-        _context.AuditLogs.Add(auditLog);
-        await _context.SaveChangesAsync();
+        context.AuditLogs.Add(auditLog);
+        await context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }
@@ -75,7 +61,7 @@ public class AuditService : IAuditService
         int page = 1,
         int pageSize = 20)
     {
-        IQueryable<AuditLog> query = _context.AuditLogs.AsQueryable();
+        IQueryable<AuditLog> query = context.AuditLogs.AsQueryable();
 
         if (userId.HasValue)
         {
@@ -118,19 +104,19 @@ public class AuditService : IAuditService
 
     public async Task<Result> CleanupOldLogsAsync(int retentionDays)
     {
-        _logger.LogInformation("Cleaning up audit logs older than {RetentionDays} days", retentionDays);
+        logger.LogInformation("Cleaning up audit logs older than {RetentionDays} days", retentionDays);
 
         DateTime cutoffDate = DateTime.UtcNow.AddDays(-retentionDays);
 
-        List<AuditLog> oldLogs = await _context.AuditLogs
+        List<AuditLog> oldLogs = await context.AuditLogs
                                      .Where(l => l.Timestamp < cutoffDate)
                                      .ToListAsync();
 
         if (oldLogs.Any())
         {
-            _context.AuditLogs.RemoveRange(oldLogs);
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Removed {Count} old audit logs", oldLogs.Count);
+            context.AuditLogs.RemoveRange(oldLogs);
+            await context.SaveChangesAsync();
+            logger.LogInformation("Removed {Count} old audit logs", oldLogs.Count);
         }
 
         return Result.Success();

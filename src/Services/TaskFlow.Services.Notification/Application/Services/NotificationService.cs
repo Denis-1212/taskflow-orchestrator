@@ -71,6 +71,15 @@ public class NotificationService(NotificationDbContext context, ILogger<Notifica
         return Result.Success();
     }
 
+    public async Task<Result> MarkAsReadAllAsync()
+    {
+        await context.Notifications.ForEachAsync(n => n.MarkAsRead());
+
+        await context.SaveChangesAsync();
+
+        return Result.Success();
+    }
+
     public async Task<Result<int>> GetUnreadCountAsync(Guid userId)
     {
         int count = await context.Notifications

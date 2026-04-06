@@ -10,13 +10,25 @@ using Infrastructure;
 
 using Microsoft.EntityFrameworkCore;
 
+using RabbitMQ.Module.Contracts;
+
 using Shared.DTOs;
 using Shared.Kernel;
+using Shared.Messaging.Events;
 
 using Project = Domain.Project;
 
-public class ProjectService(ProjectDbContext context, IAuthGrpcClient authGrpcClient, ILogger<ProjectService> logger) : IProjectService
+public class ProjectService(ProjectDbContext context, IAuthGrpcClient authGrpcClient, IPublisher publisher, ILogger<ProjectService> logger)
+    : IProjectService
 {
+
+    #region Constants
+
+    private const string EXCHANGE_NAME = "taskflow.events";
+    private const string PROJECT_CREATED_ROUTING_KEY = "project.created";
+    private const string PROJECT_USER_ADDED_ROUTING_KEY = "project.user.added";
+
+    #endregion
 
     #region Methods
 
@@ -28,6 +40,21 @@ public class ProjectService(ProjectDbContext context, IAuthGrpcClient authGrpcCl
 
         context.Projects.Add(project);
         await context.SaveChangesAsync();
+
+        var projectCreatedEvent = new ProjectCreatedEvent
+        {
+            ProjectId = project.Id,
+            OwnerId = project.OwnerId,
+            ProjectName = project.Name
+        };
+
+        await publisher.PublishAsync(
+            projectCreatedEvent,
+            c =>
+            {
+                c.WithExchange(EXCHANGE_NAME);
+                c.WithRoutingKey(PROJECT_CREATED_ROUTING_KEY);
+            });
 
         logger.LogInformation("Project created with Id: {ProjectId}", project.Id);
 
@@ -146,7 +173,28 @@ public class ProjectService(ProjectDbContext context, IAuthGrpcClient authGrpcCl
             return result;
         }
 
+        GetUserResponse user = await authGrpcClient.GetUserAsync(userId);
+
+        var userAddedEvent = new UserAddedToProjectEvent
+        {
+            ProjectId = projectId,
+            UserId = userId,
+            AddedBy = addedBy,
+            ProjectName = project.Name,
+            UserEmail = user.Email,
+            Role = role
+        };
+
         await context.SaveChangesAsync();
+
+        await publisher.PublishAsync(
+            userAddedEvent,
+            c =>
+            {
+                c.WithExchange(EXCHANGE_NAME);
+                c.WithRoutingKey(PROJECT_USER_ADDED_ROUTING_KEY);
+            });
+
         return Result.Success();
     }
 

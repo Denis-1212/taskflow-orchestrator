@@ -1,4 +1,6 @@
-namespace TaskFlow.Services.Project.Middleware;
+namespace TaskFlow.Services.Project.Extensions;
+
+using Middleware;
 
 public static class UserIdMiddlewareExtensions
 {

@@ -4,6 +4,8 @@ using System.Text.Json;
 
 using Application.Services;
 
+using Domain;
+
 using RabbitMQ.Module.Contracts;
 
 using Shared.Messaging.Events;
@@ -21,8 +23,8 @@ public class UserRegisteredHandler(IAuditService auditService, ILogger<UserRegis
         await LogAuditAsync(
             message.UserId,
             message.Email,
-            "CREATE",
-            "User",
+            AuditAction.Registration,
+            EntityType.User,
             message.UserId.ToString(),
             null,
             JsonSerializer.Serialize(message),

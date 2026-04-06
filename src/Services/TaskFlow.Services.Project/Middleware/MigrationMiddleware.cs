@@ -4,6 +4,8 @@ using Infrastructure;
 
 using Microsoft.EntityFrameworkCore;
 
+using Task = Task;
+
 public class MigrationMiddleware(RequestDelegate next)
 {
 

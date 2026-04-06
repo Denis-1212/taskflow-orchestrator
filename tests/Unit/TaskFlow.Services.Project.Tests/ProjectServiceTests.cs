@@ -15,9 +15,12 @@ using Microsoft.Extensions.Logging;
 
 using Moq;
 
+using RabbitMQ.Module.Contracts;
+
 using Shared.Kernel;
 
 using Project = Domain.Project;
+using Task = Task;
 
 public class ProjectServiceTests : IDisposable
 {
@@ -36,7 +39,8 @@ public class ProjectServiceTests : IDisposable
         _context = TestDatabase.Create();
         var loggerMock = new Mock<ILogger<ProjectService>>();
         var authGrpcClientMock = new Mock<IAuthGrpcClient>();
-        _projectService = new ProjectService(_context, authGrpcClientMock.Object, loggerMock.Object);
+        var publisher = new Mock<IPublisher>();
+        _projectService = new ProjectService(_context, authGrpcClientMock.Object, publisher.Object, loggerMock.Object);
     }
 
     #endregion

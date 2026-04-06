@@ -1,4 +1,4 @@
-namespace TaskFlow.Services.Notification.Middleware;
+namespace TaskFlow.Services.Project.Extensions;
 
 using Infrastructure;
 
@@ -12,7 +12,7 @@ public static class MigrationMiddlewareExtensions
     public static IApplicationBuilder UseMigrations(this IApplicationBuilder app)
     {
         using IServiceScope scope = app.ApplicationServices.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ProjectDbContext>();
         dbContext.Database.Migrate();
         return app;
     }

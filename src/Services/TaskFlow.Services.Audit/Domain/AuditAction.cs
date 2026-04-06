@@ -1,20 +1,36 @@
 namespace TaskFlow.Services.Audit.Domain;
 
-public static class AuditActions
+using System.Runtime.Serialization;
+
+public enum AuditAction
 {
+    [EnumMember(Value = "CREATE")]
+    Create = 1,
 
-    #region Constants
+    [EnumMember(Value = "UPDATE")]
+    Update = 2,
 
-    public const string Create = "CREATE";
-    public const string Update = "UPDATE";
-    public const string Delete = "DELETE";
-    public const string Login = "LOGIN";
-    public const string Logout = "LOGOUT";
-    public const string Assign = "ASSIGN";
-    public const string StatusChange = "STATUS_CHANGE";
-    public const string AddMember = "ADD_MEMBER";
-    public const string RemoveMember = "REMOVE_MEMBER";
+    [EnumMember(Value = "DELETE")]
+    Delete = 3,
 
-    #endregion
+    [EnumMember(Value = "LOGIN")]
+    Login = 4,
 
+    [EnumMember(Value = "LOGOUT")]
+    Logout = 5,
+
+    [EnumMember(Value = "ASSIGN")]
+    Assign = 6,
+
+    [EnumMember(Value = "STATUS_CHANGE")]
+    StatusChange = 7,
+
+    [EnumMember(Value = "ADD_MEMBER")]
+    AddMember = 8,
+
+    [EnumMember(Value = "REMOVE_MEMBER")]
+    RemoveMember = 9,
+
+    [EnumMember(Value = "REGISTRATION")]
+    Registration = 10
 }

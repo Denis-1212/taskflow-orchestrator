@@ -4,14 +4,12 @@ using System.Security.Claims;
 
 using Application.Services;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Shared.DTOs;
 using Shared.Kernel;
 
 [ApiController]
-[Authorize]
 [Route("api/notifications")]
 public class NotificationsController(INotificationService notificationService) : ControllerBase
 {
@@ -57,6 +55,23 @@ public class NotificationsController(INotificationService notificationService) :
         Guid userId = GetCurrentUserId();
 
         Result result = await notificationService.MarkAsReadAsync(id, userId);
+
+        if (result.IsFailure)
+        {
+            return result.Error!.Type switch
+            {
+                ErrorType.NotFound => NotFound(result.Error),
+                _ => BadRequest(result.Error)
+            };
+        }
+
+        return NoContent();
+    }
+
+    [HttpPatch("read-all")]
+    public async Task<IActionResult> MarkAsReadAll()
+    {
+        Result result = await notificationService.MarkAsReadAllAsync();
 
         if (result.IsFailure)
         {
