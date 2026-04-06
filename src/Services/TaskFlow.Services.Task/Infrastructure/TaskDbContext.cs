@@ -30,10 +30,10 @@ public class TaskDbContext(DbContextOptions<TaskDbContext> options) : DbContext(
             entity.HasIndex(e => e.AssigneeId);
             entity.HasIndex(e => e.IsDeleted);
 
-            entity.HasMany(e => e.StatusHistory)
-                .WithOne()
-                .HasForeignKey(h => h.TaskId)
-                .OnDelete(DeleteBehavior.Cascade);
+            // entity.HasMany(e => e.StatusHistory)
+            //     .WithOne()
+            //     .HasForeignKey(h => h.TaskId)
+            //     .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<TaskStatusHistory>(entity =>

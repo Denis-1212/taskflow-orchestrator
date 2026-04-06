@@ -1,9 +1,11 @@
 networks:
   taskflow-network:
     driver: bridge
+    
+    
 
 services:
-  # PostgreSQL Databases
+  # PostgreSQL Databases 
   auth-db:
     image: postgres:15-alpine
     container_name: taskflow-auth-db
@@ -222,3 +224,4 @@ volumes:
   seq-data:
   prometheus-data:
   grafana-data:
+

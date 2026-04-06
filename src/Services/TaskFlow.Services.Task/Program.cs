@@ -45,7 +45,9 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAuthGrpcClient, AuthGrpcClient>();
 builder.Services.AddScoped<IProjectGrpcClient, ProjectGrpcClient>();
 builder.Services.AddDbContext<TaskDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+        .EnableSensitiveDataLogging()
+        .LogTo(Console.WriteLine, LogLevel.Information));
 
 builder.Services.AddHostedService<OutboxProcessorService>();
 

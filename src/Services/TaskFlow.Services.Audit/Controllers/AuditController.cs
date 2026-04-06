@@ -2,32 +2,15 @@ namespace TaskFlow.Services.Audit.Controllers;
 
 using Application.Services;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Shared.DTOs;
 using Shared.Kernel;
 
 [ApiController]
-[Authorize(Roles = "Admin")]
 [Route("api/audit")]
-public class AuditController : ControllerBase
+public class AuditController(IAuditService auditService) : ControllerBase
 {
-
-    #region Fields
-
-    private readonly IAuditService _auditService;
-
-    #endregion
-
-    #region Constructors
-
-    public AuditController(IAuditService auditService)
-    {
-        _auditService = auditService;
-    }
-
-    #endregion
 
     #region Methods
 
@@ -42,7 +25,7 @@ public class AuditController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        Result<IEnumerable<AuditLogResult>> result = await _auditService.SearchAsync(userId, action, entityType, entityId, from, to, page, pageSize);
+        Result<IEnumerable<AuditLogResult>> result = await auditService.SearchAsync(userId, action, entityType, entityId, from, to, page, pageSize);
 
         if (result.IsFailure)
         {
@@ -55,7 +38,7 @@ public class AuditController : ControllerBase
     [HttpPost("cleanup")]
     public async Task<IActionResult> Cleanup([FromQuery] int retentionDays = 90)
     {
-        Result result = await _auditService.CleanupOldLogsAsync(retentionDays);
+        Result result = await auditService.CleanupOldLogsAsync(retentionDays);
 
         if (result.IsFailure)
         {

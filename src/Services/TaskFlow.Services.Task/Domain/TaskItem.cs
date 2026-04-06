@@ -5,12 +5,6 @@ using Shared.Kernel;
 public class TaskItem
 {
 
-    #region Fields
-
-    private readonly List<TaskStatusHistory> _statusHistory = new();
-
-    #endregion
-
     #region Properties
 
     public Guid Id { get; }
@@ -25,7 +19,6 @@ public class TaskItem
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
     public bool IsDeleted { get; private set; }
-    public IReadOnlyCollection<TaskStatusHistory> StatusHistory => _statusHistory.AsReadOnly();
 
     #endregion
 
@@ -51,8 +44,6 @@ public class TaskItem
         DueDate = dueDate.Kind == DateTimeKind.Utc ? dueDate : DateTime.SpecifyKind(dueDate, DateTimeKind.Utc);
         CreatedAt = DateTime.UtcNow;
         IsDeleted = false;
-
-        _statusHistory.Add(new TaskStatusHistory(Id, TaskItemStatus.Todo, TaskItemStatus.Todo, createdBy, "Task created"));
     }
 
     private TaskItem()
@@ -86,15 +77,6 @@ public class TaskItem
         Guid? oldAssignee = AssigneeId;
         AssigneeId = assigneeId;
         UpdatedAt = DateTime.UtcNow;
-
-        _statusHistory.Add(
-            new TaskStatusHistory(
-                Id,
-                Status,
-                Status,
-                assignedBy,
-                $"Assigned to user {assigneeId}"));
-
         return Result.Success();
     }
 
@@ -108,14 +90,6 @@ public class TaskItem
         TaskItemStatus oldStatus = Status;
         Status = newStatus;
         UpdatedAt = DateTime.UtcNow;
-
-        // _statusHistory.Add(
-        //     new TaskStatusHistory(
-        //         Id,
-        //         oldStatus,
-        //         newStatus,
-        //         changedBy,
-        //         comment ?? $"Status changed from {oldStatus} to {newStatus}"));
 
         return Result.Success();
     }

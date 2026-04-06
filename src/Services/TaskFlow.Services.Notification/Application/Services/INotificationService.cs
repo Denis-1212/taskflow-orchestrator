@@ -13,6 +13,7 @@ public interface INotificationService
     Task<Result<IEnumerable<NotificationResult>>> GetUserNotificationsAsync(Guid userId, bool unreadOnly = false, int page = 1, int pageSize = 20);
     Task<Result> MarkAsReadAsync(Guid notificationId, Guid userId);
     Task<Result<int>> GetUnreadCountAsync(Guid userId);
+    Task<Result> MarkAsReadAllAsync();
 
     #endregion
 

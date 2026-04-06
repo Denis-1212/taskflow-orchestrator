@@ -97,13 +97,6 @@ public class TaskService(
 
         context.OutboxMessages.Add(outboxMessage);
         await context.SaveChangesAsync();
-        await publisher.PublishAsync(
-            taskCreatedEvent,
-            c =>
-            {
-                c.WithExchange(EXCHANGE_NAME);
-                c.WithRoutingKey(TASK_CREATED_ROUTING_KEY);
-            });
 
         logger.LogInformation("Task created with Id: {TaskId}", task.Id);
 
@@ -274,7 +267,6 @@ public class TaskService(
             return Result.Failure<TaskResult>(Error.NotFound("Task", taskId));
         }
 
-        // Validate assignee is member of project
         (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, assigneeId);
 
         if (!memberValidation.IsMember)
@@ -283,9 +275,11 @@ public class TaskService(
         }
 
         task.AssignTo(assigneeId, assignedBy);
+
+        context.TaskStatusHistories.Add(new TaskStatusHistory(taskId, task.Status, task.Status, assignedBy, $"Assigned to user {assigneeId}"));
+
         await context.SaveChangesAsync();
 
-        // Save outbox message
         var taskAssignedEvent = new TaskAssignedEvent
         {
             TaskId = task.Id,
@@ -303,15 +297,6 @@ public class TaskService(
             JsonSerializer.Serialize(taskAssignedEvent));
 
         context.OutboxMessages.Add(outboxMessage);
-        await context.SaveChangesAsync();
-
-        await publisher.PublishAsync(
-            taskAssignedEvent,
-            c =>
-            {
-                c.WithExchange(EXCHANGE_NAME);
-                c.WithRoutingKey(TASK_ASSIGNED_CHANGED_ROUTING_KEY);
-            });
 
         return MapToResult(task);
     }
@@ -350,36 +335,28 @@ public class TaskService(
             return Result.Failure<TaskResult>(Error.Forbidden("User is not a member of this project"));
         }
 
-        string oldStatus = task.Status.ToString();
+        // string oldStatus = task.Status.ToString();
 
         task.ChangeStatus(newStatus, changedBy, comment);
 
         // // Save outbox message
-        var statusChangedEvent = new TaskStatusChangedEvent
-        {
-            TaskId = task.Id,
-            TaskTitle = task.Title,
-            ProjectId = task.ProjectId,
-            OldStatus = oldStatus,
-            NewStatus = status,
-            ChangedBy = changedBy,
-            ChangedByEmail = string.Empty
-        };
-
-        var outboxMessage = new OutboxMessage(
-            nameof(TaskStatusChangedEvent),
-            JsonSerializer.Serialize(statusChangedEvent));
-
-        context.OutboxMessages.Add(outboxMessage);
+        // var statusChangedEvent = new TaskStatusChangedEvent
+        // {
+        //     TaskId = task.Id,
+        //     TaskTitle = task.Title,
+        //     ProjectId = task.ProjectId,
+        //     OldStatus = oldStatus,
+        //     NewStatus = status,
+        //     ChangedBy = changedBy,
+        //     ChangedByEmail = string.Empty
+        // };
+        //
+        // var outboxMessage = new OutboxMessage(
+        //     nameof(TaskStatusChangedEvent),
+        //     JsonSerializer.Serialize(statusChangedEvent));
+        //
+        // context.OutboxMessages.Add(outboxMessage);
         await context.SaveChangesAsync();
-
-        await publisher.PublishAsync(
-            statusChangedEvent,
-            c =>
-            {
-                c.WithExchange(EXCHANGE_NAME);
-                c.WithRoutingKey(TASK_STATUS_CHANGED_ROUTING_KEY);
-            });
 
         return MapToResult(task);
     }

@@ -77,6 +77,7 @@ app.Use(async (context, next) =>
 });
 
 app.UseMigrations();
+app.UseUserIdExtraction();
 
 if (app.Environment.IsDevelopment())
 {
