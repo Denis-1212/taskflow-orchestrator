@@ -19,7 +19,7 @@ public interface IProjectService
     Task<Result> UpdateMemberRoleAsync(Guid projectId, Guid userId, string newRole, Guid updatedBy);
     Task<Result<IEnumerable<ProjectMemberDto>>> GetProjectMembersAsync(Guid projectId, Guid userId);
 
-    // Для gRPC
+    //gRPC
     Task<Result<ProjectResult>> GetProjectForGrpcAsync(Guid projectId);
     Task<Result<bool>> ProjectExistsAsync(Guid projectId);
     Task<Result<MemberValidationResult>> ValidateMemberAsync(Guid projectId, Guid userId);

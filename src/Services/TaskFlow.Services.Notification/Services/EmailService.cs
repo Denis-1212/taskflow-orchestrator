@@ -12,8 +12,6 @@ using Models;
 
 using Settings;
 
-using Task = System.Threading.Tasks.Task;
-
 public class EmailService(IOptions<SmtpSettings> smtpSettings, ILogger<EmailService> logger) : IEmailService
 {
 
@@ -29,7 +27,6 @@ public class EmailService(IOptions<SmtpSettings> smtpSettings, ILogger<EmailServ
     {
         try
         {
-            // Создаем MimeMessage (само письмо)
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_smtpSettings.SenderName, _smtpSettings.SenderEmail));
             message.To.Add(new MailboxAddress(emailMessage.ToName, emailMessage.ToEmail));
@@ -39,7 +36,6 @@ public class EmailService(IOptions<SmtpSettings> smtpSettings, ILogger<EmailServ
                 Text = emailMessage.Body
             };
 
-            // Отправляем письмо через SMTP клиент
             using var client = new SmtpClient();
             await client.ConnectAsync(_smtpSettings.Server, _smtpSettings.Port, SecureSocketOptions.StartTls);
             await client.AuthenticateAsync(_smtpSettings.Username, _smtpSettings.Password);
@@ -51,7 +47,6 @@ public class EmailService(IOptions<SmtpSettings> smtpSettings, ILogger<EmailServ
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to send email to {Email}", emailMessage.ToEmail);
-            // Здесь можно добавить retry-логику или отправить письмо в Dead Letter, но для начала просто логируем ошибку
         }
     }
 

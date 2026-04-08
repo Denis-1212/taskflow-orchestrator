@@ -37,7 +37,6 @@ public class TasksController(ITaskService taskService, ILogger<TasksController> 
             return result.Error!.Type switch
             {
                 ErrorType.NotFound => NotFound(result.Error),
-                ErrorType.Validation => BadRequest(result.Error),
                 _ => BadRequest(result.Error)
             };
         }
@@ -107,7 +106,6 @@ public class TasksController(ITaskService taskService, ILogger<TasksController> 
             {
                 ErrorType.NotFound => NotFound(result.Error),
                 ErrorType.Forbidden => Forbidden(result.Error),
-                ErrorType.Validation => BadRequest(result.Error),
                 _ => BadRequest(result.Error)
             };
         }
@@ -148,7 +146,6 @@ public class TasksController(ITaskService taskService, ILogger<TasksController> 
             {
                 ErrorType.NotFound => NotFound(result.Error),
                 ErrorType.Forbidden => Forbidden(result.Error),
-                ErrorType.Validation => BadRequest(result.Error),
                 _ => BadRequest(result.Error)
             };
         }
@@ -169,7 +166,6 @@ public class TasksController(ITaskService taskService, ILogger<TasksController> 
             {
                 ErrorType.NotFound => NotFound(result.Error),
                 ErrorType.Forbidden => Forbidden(result.Error),
-                ErrorType.Validation => BadRequest(result.Error),
                 _ => BadRequest(result.Error)
             };
         }

@@ -1,7 +1,5 @@
 namespace TaskFlow.Services.Task.Application.Services;
 
-using System.Text.Json;
-
 using Auth;
 
 using Clients;
@@ -12,29 +10,15 @@ using Infrastructure;
 
 using Microsoft.EntityFrameworkCore;
 
-using RabbitMQ.Module.Contracts;
-
 using Shared.Kernel;
-using Shared.Messaging.Events;
 
 public class TaskService(
     TaskDbContext context,
     IProjectGrpcClient projectClient,
     IAuthGrpcClient authGrpcClient,
-    IPublisher publisher,
     ILogger<TaskService> logger)
     : ITaskService
 {
-
-    #region Constants
-
-    private const string EXCHANGE_NAME = "taskflow.events";
-    private const string TASK_CREATED_ROUTING_KEY = "task.created";
-    private const string TASK_STATUS_CHANGED_ROUTING_KEY = "task.status.changed";
-    private const string TASK_DELETED_ROUTING_KEY = " task.deleted";
-    private const string TASK_ASSIGNED_CHANGED_ROUTING_KEY = "task.assigned";
-
-    #endregion
 
     #region Methods
 
@@ -79,23 +63,6 @@ public class TaskService(
 
         context.Tasks.Add(task);
 
-        // Save outbox message
-        var taskCreatedEvent = new TaskCreatedEvent
-        {
-            TaskId = task.Id,
-            ProjectId = task.ProjectId,
-            TaskTitle = task.Title,
-            AssigneeId = task.AssigneeId,
-            CreatedBy = task.CreatedBy,
-            DueDate = task.DueDate,
-            Priority = task.Priority.ToString()
-        };
-
-        var outboxMessage = new OutboxMessage(
-            nameof(TaskCreatedEvent),
-            JsonSerializer.Serialize(taskCreatedEvent));
-
-        context.OutboxMessages.Add(outboxMessage);
         await context.SaveChangesAsync();
 
         logger.LogInformation("Task created with Id: {TaskId}", task.Id);
@@ -155,7 +122,6 @@ public class TaskService(
             return Result.Failure(Error.NotFound("Task", taskId));
         }
 
-        // Validate user is member of project
         (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, userId);
 
         if (!memberValidation.IsMember)
@@ -163,25 +129,8 @@ public class TaskService(
             return Result.Failure(Error.Forbidden("User is not a member of this project"));
         }
 
-        task.SoftDelete();
+        task.SoftDelete(userId);
         await context.SaveChangesAsync();
-
-        var taskDeletedEvent = new TaskDeletedEvent
-        {
-            DeletedBy = userId,
-            OccurredAt = DateTime.UtcNow,
-            ProjectId = task.ProjectId,
-            TaskId = task.Id,
-            TaskTitle = task.Title
-        };
-
-        await publisher.PublishAsync(
-            taskDeletedEvent,
-            c =>
-            {
-                c.WithExchange(EXCHANGE_NAME);
-                c.WithRoutingKey(TASK_DELETED_ROUTING_KEY);
-            });
 
         return Result.Success();
     }
@@ -196,7 +145,6 @@ public class TaskService(
             return Result.Failure<TaskResult>(Error.NotFound("Task", taskId));
         }
 
-        // Validate user is member of project
         (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, userId);
 
         if (!memberValidation.IsMember)
@@ -214,11 +162,10 @@ public class TaskService(
         Guid? assigneeId,
         Guid userId)
     {
-        IQueryable<TaskItem>? query = context.Tasks.AsQueryable();
+        IQueryable<TaskItem> query = context.Tasks.AsQueryable();
 
         if (projectId.HasValue)
         {
-            // Validate user is member of project
             (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(projectId.Value, userId);
 
             if (!memberValidation.IsMember)
@@ -275,29 +222,7 @@ public class TaskService(
         }
 
         task.AssignTo(assigneeId, assignedBy);
-
-        context.TaskStatusHistories.Add(new TaskStatusHistory(taskId, task.Status, task.Status, assignedBy, $"Assigned to user {assigneeId}"));
-
         await context.SaveChangesAsync();
-
-        var taskAssignedEvent = new TaskAssignedEvent
-        {
-            TaskId = task.Id,
-            TaskTitle = task.Title,
-            ProjectId = task.ProjectId,
-            ProjectName = string.Empty,
-            AssigneeId = assigneeId,
-            AssigneeEmail = string.Empty,
-            AssignedBy = assignedBy,
-            DueDate = task.DueDate
-        };
-
-        var outboxMessage = new OutboxMessage(
-            nameof(TaskAssignedEvent),
-            JsonSerializer.Serialize(taskAssignedEvent));
-
-        context.OutboxMessages.Add(outboxMessage);
-
         return MapToResult(task);
     }
 
@@ -309,7 +234,6 @@ public class TaskService(
             status,
             changedBy);
 
-        // Получить информацию о пользователе
         GetUserResponse user = await authGrpcClient.GetUserAsync(changedBy);
 
         logger.LogWarning("Задача изменена пользователем {user.FullName}", user.FullName);
@@ -327,7 +251,6 @@ public class TaskService(
             return Result.Failure<TaskResult>(Error.NotFound("Task", taskId));
         }
 
-        // Validate user is member of project
         (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(task.ProjectId, changedBy);
 
         if (!memberValidation.IsMember)
@@ -335,27 +258,8 @@ public class TaskService(
             return Result.Failure<TaskResult>(Error.Forbidden("User is not a member of this project"));
         }
 
-        // string oldStatus = task.Status.ToString();
-
         task.ChangeStatus(newStatus, changedBy, comment);
 
-        // // Save outbox message
-        // var statusChangedEvent = new TaskStatusChangedEvent
-        // {
-        //     TaskId = task.Id,
-        //     TaskTitle = task.Title,
-        //     ProjectId = task.ProjectId,
-        //     OldStatus = oldStatus,
-        //     NewStatus = status,
-        //     ChangedBy = changedBy,
-        //     ChangedByEmail = string.Empty
-        // };
-        //
-        // var outboxMessage = new OutboxMessage(
-        //     nameof(TaskStatusChangedEvent),
-        //     JsonSerializer.Serialize(statusChangedEvent));
-        //
-        // context.OutboxMessages.Add(outboxMessage);
         await context.SaveChangesAsync();
 
         return MapToResult(task);
@@ -363,7 +267,6 @@ public class TaskService(
 
     public async Task<Result<TaskStatisticsResult>> GetStatisticsAsync(Guid projectId, Guid userId)
     {
-        // Validate user is member of project
         (bool IsMember, string Role) memberValidation = await projectClient.ValidateMemberAsync(projectId, userId);
 
         if (!memberValidation.IsMember)

@@ -6,6 +6,7 @@ public class OutboxMessage
     #region Properties
 
     public Guid Id { get; private set; }
+    public Guid TaskId { get; private set; }
     public string EventType { get; private set; }
     public string EventData { get; private set; }
     public DateTime CreatedAt { get; private set; }
@@ -17,9 +18,10 @@ public class OutboxMessage
 
     #region Constructors
 
-    public OutboxMessage(string eventType, string eventData)
+    public OutboxMessage(Guid taskId, string eventType, string eventData)
     {
         Id = Guid.NewGuid();
+        TaskId = taskId;
         EventType = eventType;
         EventData = eventData;
         CreatedAt = DateTime.UtcNow;

@@ -26,7 +26,7 @@ public static class RabbitMQExtensions
 
     private const string TASK_CREATED_ROUTING_KEY = "task.created";
     private const string TASK_STATUS_CHANGED_ROUTING_KEY = "task.status.changed";
-    private const string TASK_DELETED_ROUTING_KEY = " task.deleted";
+    private const string TASK_DELETED_ROUTING_KEY = "task.deleted";
     private const string TASK_ASSIGNED_CHANGED_ROUTING_KEY = "task.assigned";
 
     private const string PROJECT_CREATED_ROUTING_KEY = "project.created";

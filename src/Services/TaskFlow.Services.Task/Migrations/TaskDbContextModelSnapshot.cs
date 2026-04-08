@@ -49,11 +49,16 @@ namespace TaskFlow.Services.Task.Migrations
                     b.Property<int>("RetryCount")
                         .HasColumnType("integer");
 
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("ProcessedAt");
+
+                    b.HasIndex("TaskId");
 
                     b.ToTable("OutboxMessages");
                 });
@@ -69,9 +74,6 @@ namespace TaskFlow.Services.Task.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -147,10 +149,10 @@ namespace TaskFlow.Services.Task.Migrations
                     b.ToTable("TaskStatusHistories");
                 });
 
-            modelBuilder.Entity("TaskFlow.Services.Task.Domain.TaskStatusHistory", b =>
+            modelBuilder.Entity("TaskFlow.Services.Task.Domain.OutboxMessage", b =>
                 {
                     b.HasOne("TaskFlow.Services.Task.Domain.TaskItem", null)
-                        .WithMany("StatusHistory")
+                        .WithMany("OutboxMessages")
                         .HasForeignKey("TaskId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -158,7 +160,7 @@ namespace TaskFlow.Services.Task.Migrations
 
             modelBuilder.Entity("TaskFlow.Services.Task.Domain.TaskItem", b =>
                 {
-                    b.Navigation("StatusHistory");
+                    b.Navigation("OutboxMessages");
                 });
 #pragma warning restore 612, 618
         }

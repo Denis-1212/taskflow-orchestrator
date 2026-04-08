@@ -21,6 +21,8 @@
         <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.8.0-rc.1"/>
         <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.1"/>
         <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.1"/>
+        <PackageReference Include="Serilog.AspNetCore" Version="10.0.0"/>
+        <PackageReference Include="Serilog.Sinks.Seq" Version="9.0.0"/>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.5"/>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.5"/>
     </ItemGroup>
@@ -31,6 +33,12 @@
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Kernel\TaskFlow.Shared.Kernel.csproj"/>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Messaging.RabbitMQ\TaskFlow.Shared.Messaging.RabbitMQ.csproj"/>
         <ProjectReference Include="..\..\Shared\TaskFlow.Shared.Messaging\TaskFlow.Shared.Messaging.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="Serilog">
+            <HintPath>..\..\..\..\..\.nuget\packages\serilog\4.0.0\lib\net8.0\Serilog.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
 </Project>

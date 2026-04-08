@@ -244,6 +244,12 @@ public class ProjectService(ProjectDbContext context, IAuthGrpcClient authGrpcCl
 
         if (result.IsFailure)
         {
+            logger.LogWarning(
+                "Failure Updating role for user {UserId} in project {ProjectId} - {Message} ",
+                userId,
+                projectId,
+                result.Error?.Message);
+
             return result;
         }
 
@@ -290,7 +296,7 @@ public class ProjectService(ProjectDbContext context, IAuthGrpcClient authGrpcCl
         return result;
     }
 
-    // gRPC методы
+    // gRPC 
     public async Task<Result<ProjectResult>> GetProjectForGrpcAsync(Guid projectId)
     {
         Project? project = await context.Projects

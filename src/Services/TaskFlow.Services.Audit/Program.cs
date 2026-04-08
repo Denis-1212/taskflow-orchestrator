@@ -32,7 +32,6 @@ builder.WebHost.ConfigureKestrel(options =>
         });
 });
 
-// Add services
 builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.AddOpenTelemetry()
@@ -52,24 +51,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 
 WebApplication app = builder.Build();
-app.Use(async (context, next) =>
-{
-    try
-    {
-        await next();
-    }
-    catch (Exception ex)
-    {
-        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        logger.LogError(
-            ex,
-            "Unhandled exception occurred processing {Method} {Path}",
-            context.Request.Method,
-            context.Request.Path);
-
-        throw;
-    }
-});
+app.UseGlobalExceptionHandler();
 
 app.UseMigrations();
 
@@ -83,17 +65,8 @@ var module = app.Services.GetRequiredService<MessagingModule>();
 await module.StartConsumersAsync();
 
 app.MapPrometheusScrapingEndpoint();
-
-app.Use(async (context, next) =>
-{
-    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-    logger.LogInformation("Request: {Method} {Path}", context.Request.Method, context.Request.Path);
-    await next();
-    logger.LogInformation("Response: {StatusCode}", context.Response.StatusCode);
-});
-
 app.MapControllers();
 app.MapHealthChecks("/health/live");
-app.MapHealthChecks("/health/ready");
+app.UseRequestLogging();
 
 app.Run();

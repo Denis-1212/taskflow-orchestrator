@@ -2,8 +2,6 @@ namespace TaskFlow.Services.Notification.Services;
 
 using Models;
 
-using Task = System.Threading.Tasks.Task;
-
 public interface IEmailService
 {
 

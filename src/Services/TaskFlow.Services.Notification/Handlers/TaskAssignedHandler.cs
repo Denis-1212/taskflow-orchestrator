@@ -8,8 +8,6 @@ using RabbitMQ.Module.Contracts;
 
 using Shared.Messaging.Events;
 
-using Task = System.Threading.Tasks.Task;
-
 public class TaskAssignedHandler(INotificationService notificationService, ILogger<TaskAssignedHandler> logger)
     : IMessageHandler<TaskAssignedEvent>
 {
@@ -27,7 +25,7 @@ public class TaskAssignedHandler(INotificationService notificationService, ILogg
             message.AssigneeId,
             NotificationType.TaskAssigned,
             $"Task Assigned: {message.TaskTitle}",
-            $"You have been assigned to task '{message.TaskTitle}' in project '{message.ProjectName}' due on {message.DueDate:dd.MM.yyyy}",
+            $"You have been assigned to task '{message.TaskTitle}' in project '{message.ProjectId}' due on {message.DueDate:dd.MM.yyyy}",
             $"{{\"taskId\":\"{message.TaskId}\",\"projectId\":\"{message.ProjectId}\"}}");
     }
 

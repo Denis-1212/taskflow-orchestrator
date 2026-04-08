@@ -29,11 +29,6 @@ public class TaskDbContext(DbContextOptions<TaskDbContext> options) : DbContext(
             entity.HasIndex(e => e.ProjectId);
             entity.HasIndex(e => e.AssigneeId);
             entity.HasIndex(e => e.IsDeleted);
-
-            // entity.HasMany(e => e.StatusHistory)
-            //     .WithOne()
-            //     .HasForeignKey(h => h.TaskId)
-            //     .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<TaskStatusHistory>(entity =>
@@ -54,6 +49,11 @@ public class TaskDbContext(DbContextOptions<TaskDbContext> options) : DbContext(
             entity.Property(e => e.EventData);
             entity.HasIndex(e => e.ProcessedAt);
             entity.HasIndex(e => e.CreatedAt);
+
+            entity.HasOne<TaskItem>()
+                .WithMany()
+                .HasForeignKey(e => e.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

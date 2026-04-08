@@ -42,8 +42,8 @@ export const projectService = {
   },
 
   async updateMemberRole(projectId: string, userId: string, role: ProjectRole): Promise<void> {
-    await apiClient.put(`/project/api/projects/${projectId}/members/${userId}/role`, role, {
-      headers: { 'Content-Type': 'text/plain' }
+    await apiClient.put(`/project/api/projects/${projectId}/members/${userId}/role`, { role }, {
+      headers: { 'Content-Type': 'application/json' }
     })
   },
 

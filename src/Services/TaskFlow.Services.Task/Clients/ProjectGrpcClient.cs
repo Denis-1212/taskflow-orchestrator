@@ -29,28 +29,6 @@ public class ProjectGrpcClient : IProjectGrpcClient
 
     #region Methods
 
-    public async Task<GetProjectResponse?> GetProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogInformation("Calling ProjectService.GetProject for ProjectId: {ProjectId}", projectId);
-
-            var request = new GetProjectRequest
-            {
-                ProjectId = projectId.ToString()
-            };
-
-            GetProjectResponse? response = await _client.GetProjectAsync(request, cancellationToken: cancellationToken);
-
-            return response;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error calling ProjectService.GetProject for ProjectId: {ProjectId}", projectId);
-            throw;
-        }
-    }
-
     public async Task<bool> ProjectExistsAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
         try

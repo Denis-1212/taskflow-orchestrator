@@ -4,8 +4,6 @@ using System.Security.Claims;
 
 using Microsoft.Extensions.Primitives;
 
-using Task = Task;
-
 public class UserIdMiddleware(RequestDelegate next, ILogger<UserIdMiddleware> logger)
 {
 
@@ -13,11 +11,9 @@ public class UserIdMiddleware(RequestDelegate next, ILogger<UserIdMiddleware> lo
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Пытаемся получить user ID из заголовка (от Gateway)
         if (context.Request.Headers.TryGetValue("X-User-Id", out StringValues userIdHeader) &&
             Guid.TryParse(userIdHeader, out Guid userId))
         {
-            // Создаем ClaimsIdentity и добавляем в контекст
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, userId.ToString())

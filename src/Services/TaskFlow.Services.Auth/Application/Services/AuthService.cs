@@ -53,7 +53,6 @@ public class AuthService(
     {
         logger.LogInformation("Registration attempt for email: {Email}", email);
 
-        // Check if user exists
         User? existingUser = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         if (existingUser != null)
@@ -61,20 +60,16 @@ public class AuthService(
             return Error.Conflict($"User with email {email} already exists");
         }
 
-        // Create new user
         string passwordHash = passwordHasher.Hash(password);
 
-        // Create new user with hashed password
         var user = new User(email, passwordHash, fullName);
 
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
-        // Generate tokens
         string accessToken = jwtService.GenerateAccessToken(user);
         string refreshToken = jwtService.GenerateRefreshToken();
 
-        // Save refresh token in Redis
         await refreshTokenService.SaveRefreshTokenAsync(
             refreshToken,
             user.Id,
@@ -123,7 +118,6 @@ public class AuthService(
         string accessToken = jwtService.GenerateAccessToken(user);
         string refreshToken = jwtService.GenerateRefreshToken();
 
-        // Save refresh token in Redis
         await refreshTokenService.SaveRefreshTokenAsync(
             refreshToken,
             user.Id,
@@ -142,7 +136,6 @@ public class AuthService(
     {
         logger.LogInformation("Refresh token attempt");
 
-        // Get from Redis
         RefreshTokenData? tokenData = await refreshTokenService.GetRefreshTokenAsync(refreshToken);
 
         if (tokenData == null)
@@ -157,14 +150,11 @@ public class AuthService(
             return Error.Unauthorized("User not found or inactive");
         }
 
-        // Delete old refresh token
         await refreshTokenService.RemoveRefreshTokenAsync(refreshToken);
 
-        // Generate new token pair
         string newAccessToken = jwtService.GenerateAccessToken(user);
         string newRefreshToken = jwtService.GenerateRefreshToken();
 
-        // Save new refresh token
         await refreshTokenService.SaveRefreshTokenAsync(
             newRefreshToken,
             user.Id,
