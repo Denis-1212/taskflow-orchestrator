@@ -63,47 +63,20 @@ try
     }
 
     builder.Services.AddDbContext<ProjectDbContext>(options =>
-        options.UseNpgsql(connectionString));
+        options.UseNpgsql(connectionString)
+            .EnableSensitiveDataLogging()
+            .LogTo(Console.WriteLine, LogLevel.Information));
 
     builder.Services.AddRabbitMQModule(builder.Configuration);
     builder.Services.AddGrpc();
     builder.Services.AddScoped<IProjectService, ProjectService>();
-
-    builder.Services.AddCors(options =>
-    {
-        options.AddPolicy(
-            "Development",
-            policy =>
-            {
-                policy.AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader();
-            });
-    });
 
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
     builder.Services.AddHealthChecks();
 
     WebApplication app = builder.Build();
-    app.Use(async (context, next) =>
-    {
-        try
-        {
-            await next();
-        }
-        catch (Exception ex)
-        {
-            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogError(
-                ex,
-                "Unhandled exception occurred processing {Method} {Path}",
-                context.Request.Method,
-                context.Request.Path);
-
-            throw;
-        }
-    });
+    app.UseGlobalExceptionHandler();
 
     app.MapGrpcService<ProjectGrpcService>();
     app.Logger.LogInformation("gRPC service registered: ProjectGrpcService");
@@ -113,7 +86,6 @@ try
     {
         app.UseSwagger();
         app.UseSwaggerUI();
-        app.UseCors("Development");
     }
 
     app.UseUserIdExtraction();
@@ -121,15 +93,8 @@ try
     app.MapControllers();
 
     app.MapHealthChecks("/health/live");
-    app.MapHealthChecks("/health/ready");
 
-    app.Use(async (context, next) =>
-    {
-        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        logger.LogInformation("Request: {Method} {Path}", context.Request.Method, context.Request.Path);
-        await next();
-        logger.LogInformation("Response: {StatusCode}", context.Response.StatusCode);
-    });
+    app.UseRequestLogging();
 
     app.Run();
 }

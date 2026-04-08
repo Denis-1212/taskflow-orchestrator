@@ -40,12 +40,11 @@ public class Project
         _members.Add(new ProjectMember(Id, ownerId, ProjectRole.Owner));
     }
 
-    // Для EF Core
     private Project()
     {
         Name = string.Empty;
         Description = string.Empty;
-        _members = new List<ProjectMember>();
+        _members = [];
     }
 
     #endregion

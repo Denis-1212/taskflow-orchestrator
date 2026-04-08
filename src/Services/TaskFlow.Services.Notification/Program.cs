@@ -6,12 +6,21 @@ using OpenTelemetry.Resources;
 
 using RabbitMQ.Module;
 
+using Serilog;
+
 using TaskFlow.Services.Notification.Application.Services;
 using TaskFlow.Services.Notification.Clients;
 using TaskFlow.Services.Notification.Extensions;
 using TaskFlow.Services.Notification.Infrastructure;
 using TaskFlow.Services.Notification.Services;
 using TaskFlow.Services.Notification.Settings;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.WithProperty("Service", "NotificationService")
+    .WriteTo.Console()
+    .WriteTo.Seq("http://seq:5341")
+    .CreateLogger();
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -57,24 +66,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 
 WebApplication app = builder.Build();
-app.Use(async (context, next) =>
-{
-    try
-    {
-        await next();
-    }
-    catch (Exception ex)
-    {
-        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        logger.LogError(
-            ex,
-            "Unhandled exception occurred processing {Method} {Path}",
-            context.Request.Method,
-            context.Request.Path);
-
-        throw;
-    }
-});
+app.UseGlobalExceptionHandler();
 
 app.UseMigrations();
 app.UseUserIdExtraction();
@@ -89,16 +81,8 @@ var module = app.Services.GetRequiredService<MessagingModule>();
 await module.StartConsumersAsync();
 
 app.MapPrometheusScrapingEndpoint();
-app.Use(async (context, next) =>
-{
-    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-    logger.LogInformation("Request: {Method} {Path}", context.Request.Method, context.Request.Path);
-    await next();
-    logger.LogInformation("Response: {StatusCode}", context.Response.StatusCode);
-});
-
 app.MapControllers();
 app.MapHealthChecks("/health/live");
-app.MapHealthChecks("/health/ready");
+app.UseRequestLogging();
 
 app.Run();

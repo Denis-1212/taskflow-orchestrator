@@ -12,15 +12,19 @@ public static class RabbitMQExtensions
 
     #region Constants
 
+    private const string EXCHANGE_NAME = "taskflow.events";
+
     private const string TASK_CREATED_QUEUE_NAME = "notification.task-created";
     private const string TASK_ASSIGNED_CHANGED_QUEUE_NAME = "notification.task-assigned-changed";
     private const string TASK_STATUS_CHANGED_QUEUE_NAME = "notification.task-status-changed";
     private const string TASK_DELETED_QUEUE_NAME = "notification.task-deleted";
-    private const string EXCHANGE_NAME = "taskflow.events";
+    private const string TASK_UPDATED_QUEUE_NAME = "notification.task-updated";
+
     private const string TASK_CREATED_ROUTING_KEY = "task.created";
     private const string TASK_STATUS_CHANGED_ROUTING_KEY = "task.status.changed";
-    private const string TASK_DELETED_ROUTING_KEY = " task.deleted";
+    private const string TASK_DELETED_ROUTING_KEY = "task.deleted";
     private const string TASK_ASSIGNED_CHANGED_ROUTING_KEY = "task.assigned";
+    private const string TASK_UPDATED_ROUTING_KEY = "task.updated";
 
     #endregion
 
@@ -30,10 +34,6 @@ public static class RabbitMQExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddScoped<TaskCreatedHandler>();
-        services.AddScoped<TaskAssignedHandler>();
-        services.AddScoped<TaskStatusChangedHandler>();
-
         services.AddSingleton(sp =>
         {
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
@@ -85,6 +85,14 @@ public static class RabbitMQExtensions
                 c.QueueName = TASK_DELETED_QUEUE_NAME;
                 c.ExchangeName = EXCHANGE_NAME;
                 c.RoutingKey = TASK_DELETED_ROUTING_KEY;
+                c.PrefetchCount = 10;
+            });
+
+            module.AddConsumer<TaskUpdatedEvent, TaskUpdatedHandler>(c =>
+            {
+                c.QueueName = TASK_UPDATED_QUEUE_NAME;
+                c.ExchangeName = EXCHANGE_NAME;
+                c.RoutingKey = TASK_UPDATED_ROUTING_KEY;
                 c.PrefetchCount = 10;
             });
 

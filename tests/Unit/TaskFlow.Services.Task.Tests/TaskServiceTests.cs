@@ -15,8 +15,6 @@ using Microsoft.Extensions.Logging;
 
 using Moq;
 
-using RabbitMQ.Module.Contracts;
-
 using Shared.Kernel;
 
 using Task = System.Threading.Tasks.Task;
@@ -39,9 +37,9 @@ public class TaskServiceTests : IDisposable
         _context = TestDatabase.Create();
         _projectClientMock = new Mock<IProjectGrpcClient>();
         var authGrpcClientMock = new Mock<IAuthGrpcClient>();
-        var publisherMock = new Mock<IPublisher>();
+
         var loggerMock = new Mock<ILogger<TaskService>>();
-        _taskService = new TaskService(_context, _projectClientMock.Object, authGrpcClientMock.Object, publisherMock.Object, loggerMock.Object);
+        _taskService = new TaskService(_context, _projectClientMock.Object, authGrpcClientMock.Object, loggerMock.Object);
     }
 
     #endregion

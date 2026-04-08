@@ -30,3 +30,7 @@ export interface AddMemberRequest {
   role: Exclude<ProjectRole, 'Owner'>
 }
 
+export interface ProjectMemberDto {
+  role: ProjectRole
+}
+

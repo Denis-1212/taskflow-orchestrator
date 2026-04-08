@@ -8,8 +8,6 @@ using RabbitMQ.Module.Contracts;
 
 using Shared.Messaging.Events;
 
-using Task = System.Threading.Tasks.Task;
-
 public class TaskStatusChangedHandler(INotificationService notificationService, ILogger<TaskStatusChangedHandler> logger)
     : IMessageHandler<TaskStatusChangedEvent>
 {
@@ -24,7 +22,6 @@ public class TaskStatusChangedHandler(INotificationService notificationService, 
             message.OldStatus,
             message.NewStatus);
 
-        // Уведомление автору изменения
         await notificationService.CreateInAppNotificationAsync(
             message.ChangedBy,
             NotificationType.TaskStatusChanged,

@@ -1,6 +1,6 @@
 namespace TaskFlow.Shared.Messaging.Events;
 
-public record TaskCreatedEvent : IEvent
+public record TaskCreatedEvent : ITaskEvent
 {
 
     #region Properties
@@ -21,7 +21,7 @@ public record TaskCreatedEvent : IEvent
 
 }
 
-public record TaskUpdatedEvent : IEvent
+public record TaskUpdatedEvent : ITaskEvent
 {
 
     #region Properties
@@ -40,7 +40,7 @@ public record TaskUpdatedEvent : IEvent
 
 }
 
-public record TaskAssignedEvent : IEvent
+public record TaskAssignedEvent : ITaskEvent
 {
 
     #region Properties
@@ -51,9 +51,7 @@ public record TaskAssignedEvent : IEvent
     public required Guid TaskId { get; init; }
     public required string TaskTitle { get; init; }
     public required Guid ProjectId { get; init; }
-    public required string ProjectName { get; init; }
     public required Guid AssigneeId { get; init; }
-    public required string AssigneeEmail { get; init; }
     public required Guid AssignedBy { get; init; }
     public required DateTime DueDate { get; init; }
 
@@ -61,7 +59,7 @@ public record TaskAssignedEvent : IEvent
 
 }
 
-public record TaskStatusChangedEvent : IEvent
+public record TaskStatusChangedEvent : ITaskEvent
 {
 
     #region Properties
@@ -81,7 +79,7 @@ public record TaskStatusChangedEvent : IEvent
 
 }
 
-public record TaskDeletedEvent : IEvent
+public record TaskDeletedEvent : ITaskEvent
 {
 
     #region Properties

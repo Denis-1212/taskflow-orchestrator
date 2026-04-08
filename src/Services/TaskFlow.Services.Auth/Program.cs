@@ -1,7 +1,6 @@
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -48,14 +47,9 @@ builder.WebHost.ConfigureKestrel(options =>
         });
 });
 
-// Add services
 builder.Services.AddGrpc();
 builder.Host.UseSerilog();
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddHealthChecks();
-
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddDbContext<AuthDbContext>(options =>
@@ -72,7 +66,6 @@ builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddRabbitMQModule(builder.Configuration);
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Add authentication
 string? jwtSecret = builder.Configuration["Jwt:Secret"];
 
 if (string.IsNullOrEmpty(jwtSecret))
@@ -99,7 +92,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// OpenTelemetry metrics
 builder.Services.AddOpenTelemetry()
     .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
@@ -108,51 +100,15 @@ builder.Services.AddOpenTelemetry()
             options.ScrapeResponseCacheDurationMilliseconds = 0;
         }));
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddHealthChecks();
+
 WebApplication app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler(errorApp =>
-    {
-        errorApp.Run(async context =>
-        {
-            context.Response.StatusCode = 500;
-            context.Response.ContentType = "application/problem+json";
+app.UseGlobalExceptionHandler();
 
-            var exceptionHandler = context.Features.Get<IExceptionHandlerFeature>();
-            Exception? error = exceptionHandler?.Error;
-
-            var response = new
-            {
-                Title = "An error occurred",
-                Status = 500,
-                Detail = app.Environment.IsDevelopment() ? error?.Message : "Internal server error"
-            };
-
-            await context.Response.WriteAsJsonAsync(response);
-        });
-    });
-}
-
-if (app.Environment.IsDevelopment())
-{
-    // Автоматическое применение миграций
-    using IServiceScope scope = app.Services.CreateScope();
-
-    var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-
-    try
-    {
-        app.Logger.LogInformation("Applying database migrations...");
-        await dbContext.Database.MigrateAsync();
-        app.Logger.LogInformation("Migrations applied successfully");
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogError(ex, "Failed to apply migrations");
-        throw;
-    }
-}
+app.UseMigrations();
 
 app.UseHttpsRedirection();
 app.UseRouting();
@@ -165,10 +121,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapPrometheusScrapingEndpoint();
 app.MapControllers();
 app.MapGrpcService<AuthGrpcService>();
 app.MapHealthChecks("/health/live");
-app.MapHealthChecks("/health/ready");
-app.MapPrometheusScrapingEndpoint();
+app.UseRequestLogging();
 
 app.Run();

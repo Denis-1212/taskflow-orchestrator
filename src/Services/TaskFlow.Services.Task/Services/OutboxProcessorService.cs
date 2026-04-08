@@ -20,6 +20,17 @@ public class OutboxProcessorService(
     : BackgroundService
 {
 
+    #region Constants
+
+    private const string EXCHANGE_NAME = "taskflow.events";
+    private const string TASK_CREATED_ROUTING_KEY = "task.created";
+    private const string TASK_STATUS_CHANGED_ROUTING_KEY = "task.status.changed";
+    private const string TASK_DELETED_ROUTING_KEY = "task.deleted";
+    private const string TASK_ASSIGNED_CHANGED_ROUTING_KEY = "task.assigned";
+    private const string TASK_UPDATED_ROUTING_KEY = "task.updated";
+
+    #endregion
+
     #region Fields
 
     private readonly TimeSpan _interval = TimeSpan.FromSeconds(5);
@@ -54,7 +65,6 @@ public class OutboxProcessorService(
     {
         using IServiceScope scope = scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<TaskDbContext>();
-        var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
 
         List<OutboxMessage> messages = await context.OutboxMessages
                                            .Where(m => m.ProcessedAt == null)
@@ -75,11 +85,11 @@ public class OutboxProcessorService(
             {
                 try
                 {
-                    await PublishMessageAsync(message, publisher, cancellationToken);
+                    await PublishMessageAsync(message, cancellationToken);
 
                     message.MarkProcessed();
 
-                    logger.LogDebug(
+                    logger.LogInformation(
                         "Published outbox message {MessageId} of type {EventType}",
                         message.Id,
                         message.EventType);
@@ -110,28 +120,84 @@ public class OutboxProcessorService(
 
     private async Task PublishMessageAsync(
         OutboxMessage message,
-        IPublisher publisher,
         CancellationToken cancellationToken)
     {
-        // Determine event type from stored type name
+        using IServiceScope scope = scopeFactory.CreateScope();
+        var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
         string eventTypeName = message.EventType;
 
-        // Deserialize to object based on type
-        object? eventObject = eventTypeName switch
+        var eventType = Type.GetType($"TaskFlow.Shared.Messaging.Events.{eventTypeName}, TaskFlow.Shared.Messaging");
+
+        if (eventType == null)
         {
-            nameof(TaskCreatedEvent) => JsonSerializer.Deserialize<TaskCreatedEvent>(message.EventData),
-            nameof(TaskAssignedEvent) => JsonSerializer.Deserialize<TaskAssignedEvent>(message.EventData),
-            nameof(TaskStatusChangedEvent) => JsonSerializer.Deserialize<TaskStatusChangedEvent>(message.EventData),
-            _ => null
-        };
+            throw new InvalidOperationException($"Cannot find type for event: {eventTypeName}");
+        }
+
+        object? eventObject = JsonSerializer.Deserialize(message.EventData, eventType);
 
         if (eventObject == null)
         {
             throw new InvalidOperationException($"Unknown event type: {eventTypeName}");
         }
 
-        // Publish to RabbitMQ
-        await publisher.PublishAsync(eventObject, cancellationToken: cancellationToken);
+        switch (eventObject)
+        {
+            case TaskCreatedEvent e:
+                await publisher.PublishAsync(
+                    e,
+                    o =>
+                    {
+                        o.WithExchange(EXCHANGE_NAME);
+                        o.WithRoutingKey(TASK_CREATED_ROUTING_KEY);
+                    },
+                    cancellationToken);
+
+                break;
+            case TaskAssignedEvent e:
+                await publisher.PublishAsync(
+                    e,
+                    o =>
+                    {
+                        o.WithExchange(EXCHANGE_NAME);
+                        o.WithRoutingKey(TASK_ASSIGNED_CHANGED_ROUTING_KEY);
+                    },
+                    cancellationToken);
+
+                break;
+            case TaskStatusChangedEvent e:
+                await publisher.PublishAsync(
+                    e,
+                    o =>
+                    {
+                        o.WithExchange(EXCHANGE_NAME);
+                        o.WithRoutingKey(TASK_STATUS_CHANGED_ROUTING_KEY);
+                    },
+                    cancellationToken);
+
+                break;
+            case TaskDeletedEvent e:
+                await publisher.PublishAsync(
+                    e,
+                    o =>
+                    {
+                        o.WithExchange(EXCHANGE_NAME);
+                        o.WithRoutingKey(TASK_DELETED_ROUTING_KEY);
+                    },
+                    cancellationToken);
+
+                break;
+            case TaskUpdatedEvent e:
+                await publisher.PublishAsync(
+                    e,
+                    o =>
+                    {
+                        o.WithExchange(EXCHANGE_NAME);
+                        o.WithRoutingKey(TASK_UPDATED_ROUTING_KEY);
+                    },
+                    cancellationToken);
+
+                break;
+        }
     }
 
     #endregion

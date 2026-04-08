@@ -4,6 +4,8 @@ using System.Security.Claims;
 
 using Application.Services;
 
+using Domain;
+
 using Microsoft.AspNetCore.Mvc;
 
 using Shared.DTOs;
@@ -11,7 +13,7 @@ using Shared.Kernel;
 
 [ApiController]
 [Route("api/projects")]
-public class ProjectsController(IProjectService projectService) : ControllerBase
+public class ProjectsController(IProjectService projectService, ILogger<ProjectsController> logger) : ControllerBase
 {
 
     #region Methods
@@ -168,14 +170,20 @@ public class ProjectsController(IProjectService projectService) : ControllerBase
     }
 
     [HttpPut("{id:guid}/members/{memberId:guid}/role")]
-    public async Task<IActionResult> UpdateMemberRole(Guid id, Guid memberId, [FromBody] string role)
+    public async Task<IActionResult> UpdateMemberRole(Guid id, Guid memberId, [FromBody] UpdateRoleDto role)
     {
+        logger.LogDebug($"Updating member role {role.Role}");
+
         Guid userId = GetCurrentUserId();
 
-        Result result = await projectService.UpdateMemberRoleAsync(id, memberId, role, userId);
+        logger.LogDebug($"Updating member role current UserId : {userId}");
+
+        Result result = await projectService.UpdateMemberRoleAsync(id, memberId, role.Role, userId);
 
         if (result.IsFailure)
         {
+            logger.LogWarning("Updating member role failed : {Message}", result.Error?.Message);
+
             return result.Error!.Type switch
             {
                 ErrorType.NotFound => NotFound(result.Error),
@@ -189,7 +197,6 @@ public class ProjectsController(IProjectService projectService) : ControllerBase
 
     private Guid GetCurrentUserId()
     {
-        // Получаем user ID из Claims, который установил middleware
         string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid userId))
@@ -209,15 +216,6 @@ public class ProjectsController(IProjectService projectService) : ControllerBase
             project.OwnerId,
             project.CreatedAt);
     }
-
-    // private static ProjectMemberDto MapToMemberDto(ProjectMemberResult member)
-    // {
-    //     return new ProjectMemberDto(
-    //         member.UserId,
-    //         string.Empty, // Email - будет подтягиваться из Auth Service при необходимости
-    //         string.Empty, // FullName - будет подтягиваться из Auth Service при необходимости
-    //         member.Role);
-    // }
 
     private static ObjectResult Forbidden(Error error)
     {

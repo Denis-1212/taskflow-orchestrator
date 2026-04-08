@@ -16,8 +16,6 @@ using Services;
 
 using Shared.Messaging.Events;
 
-using Task = System.Threading.Tasks.Task;
-
 public class TaskCreatedHandler(
     INotificationService notificationService,
     IEmailService emailService,
@@ -32,7 +30,6 @@ public class TaskCreatedHandler(
     {
         logger.LogInformation("Processing TaskCreated event for Task {TaskId}", message.TaskId);
 
-        // Уведомление создателю задачи
         await notificationService.CreateInAppNotificationAsync(
             message.CreatedBy,
             NotificationType.TaskCreated,
@@ -59,7 +56,6 @@ public class TaskCreatedHandler(
 
         await emailService.SendEmailAsync(emailMessage);
 
-        // Если есть исполнитель — уведомить его
         if (message.AssigneeId.HasValue)
         {
             await notificationService.CreateInAppNotificationAsync(

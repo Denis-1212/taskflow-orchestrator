@@ -1,4 +1,4 @@
-namespace TaskFlow.Services.Task.Extensions;
+namespace TaskFlow.Services.Task.Middleware;
 
 using Infrastructure;
 

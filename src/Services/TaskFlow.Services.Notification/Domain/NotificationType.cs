@@ -6,6 +6,5 @@ public enum NotificationType
     TaskAssigned,
     TaskStatusChanged,
     TaskDeleted,
-    ProjectInvite,
-    DueDateReminder
+    TaskUpdated
 }
