@@ -41,19 +41,7 @@ public class AuthGrpcClient : IAuthGrpcClient
                 UserId = userId.ToString()
             };
 
-            var handler = new HttpClientHandler();
-            var httpClient = new HttpClient(handler);
-
-            GrpcChannel channel = GrpcChannel.ForAddress(
-                "http://localhost:5007",
-                new GrpcChannelOptions
-                {
-                    HttpClient = httpClient
-                });
-
-            var client = new AuthService.AuthServiceClient(channel);
-
-            GetUserResponse response = await client.GetUserAsync(request, cancellationToken: cancellationToken);
+            GetUserResponse response = await _client.GetUserAsync(request, cancellationToken: cancellationToken);
             _logger.LogInformation("Response received. UserId: {UserId}, Email: {Email}", response.UserId, response.Email);
             return response;
         }

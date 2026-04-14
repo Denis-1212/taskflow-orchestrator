@@ -6,13 +6,11 @@ using Infrastructure;
 
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-using RabbitMQ.Module.Contracts;
-
 using Shared.Messaging.Events;
 
 using Task = System.Threading.Tasks.Task;
 
-public class DomainEventInterceptor(IPublisher publisher) : SaveChangesInterceptor
+public class DomainEventInterceptor : SaveChangesInterceptor
 {
 
     #region Constants
@@ -79,25 +77,6 @@ public class DomainEventInterceptor(IPublisher publisher) : SaveChangesIntercept
             e.GetType().Name,
             JsonSerializer.Serialize(e, e.GetType())
         )).ToList();
-
-        // var taskUpdatedEvent = new TaskUpdatedEvent
-        // {
-        //     TaskId = outboxMessages[0].TaskId,
-        //     NewTitle = "Test Updated",
-        //     ProjectId = outboxMessages[0].TaskId,
-        //     TaskTitle = "Test Updated",
-        //     OldTitle = "!!!!!!!!!!!",
-        //     UpdatedBy = outboxMessages[0].TaskId
-        // };
-        //
-        // await publisher.PublishAsync(
-        //     taskUpdatedEvent,
-        //     option =>
-        //     {
-        //         option.WithExchange(EXCHANGE_NAME);
-        //         option.WithRoutingKey(TASK_UPDATED_ROUTING_KEY);
-        //     }
-        // );
 
         if (outboxMessages.Count != 0)
         {

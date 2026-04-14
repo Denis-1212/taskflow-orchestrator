@@ -134,6 +134,24 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+      
+  rabbitmq-init:
+    image: alpine/curl:latest
+    container_name: taskflow-rabbitmq-init
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - taskflow-network
+    volumes:
+      - ./deployments/rabbitmq/init.sh:/init.sh
+    command: >
+      sh -c "
+        apk add --no-cache netcat-openbsd &&
+        chmod +x /init.sh &&
+        /init.sh
+      "
+    restart: "no"    
 
   # ==================== Observability ====================
   seq:
@@ -221,6 +239,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      rabbitmq-init:
+        condition: service_completed_successfully    
 
   project-service:
     build:
@@ -237,6 +257,7 @@ services:
       - RabbitMQ__VirtualHost=/    
       - Ports__Rest=5002
       - Ports__Grpc=5006
+      - Grpc__AuthService__Url=http://auth-service:5007
     ports:
       - "5002:5002"
     networks:
@@ -244,7 +265,9 @@ services:
     depends_on:
       project-db:
         condition: service_healthy
-
+      rabbitmq-init:
+        condition: service_completed_successfully
+  
   task-service:
     build:
       context: .
@@ -259,6 +282,8 @@ services:
       - RabbitMQ__Password=${RABBITMQ_PASSWORD:-taskflow123}
       - RabbitMQ__VirtualHost=/
       - Ports__Rest=5003
+      - Grpc__ProjectService__Url=http://project-service:5006
+      - Grpc__AuthService__Url=http://auth-service:5007
     ports:
       - "5003:5003"
     networks:
@@ -266,9 +291,9 @@ services:
     depends_on:
       task-db:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-
+      rabbitmq-init:
+        condition: service_completed_successfully
+  
   notification-service:
     build:
       context: .
@@ -290,9 +315,9 @@ services:
     depends_on:
       notification-db:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-
+      rabbitmq-init:
+        condition: service_completed_successfully
+  
   audit-service:
     build:
       context: .
@@ -314,8 +339,16 @@ services:
     depends_on:
       audit-db:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      rabbitmq-init:
+        condition: service_completed_successfully
+  
+  client-builder:
+    build:
+      context: ./client/taskflow-orchestrator-frontend
+      dockerfile: Dockerfile
+    container_name: taskflow-client-builder
+    volumes:
+      - client-dist:/app/dist      
 
   api-gateway:
     build:
@@ -339,6 +372,10 @@ services:
       - task-service
       - notification-service
       - audit-service
+      - client-builder
+    volumes:
+      - client-dist:/app/wwwroot
+  
 
 volumes:
   auth-db-data:
@@ -351,3 +388,4 @@ volumes:
   seq-data:
   prometheus-data:
   grafana-data:
+  client-dist:  

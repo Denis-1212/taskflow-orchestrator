@@ -46,7 +46,7 @@ export function Popover({
                         alignClasses[align],
                         className
                     )}>
-                        <div className="rounded-md border bg-popover text-popover-foreground shadow-md">
+                        <div className="rounded-md border bg-popover text-popover-foreground bg-background shadow-md">
                             {children}
                         </div>
                     </div>
