@@ -27,8 +27,11 @@ export function RouterProvider() {
     <BrowserRouter>
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
+
           <Route element={<PublicRoute />}>
             <Route element={<AuthLayout />}>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/*.html" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
             </Route>
