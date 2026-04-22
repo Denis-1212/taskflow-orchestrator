@@ -6,6 +6,7 @@ obj/
 .vs/
 .vscode/
 .idea/
+.sonarqube/
 
 # Build results
 [Dd]ebug/

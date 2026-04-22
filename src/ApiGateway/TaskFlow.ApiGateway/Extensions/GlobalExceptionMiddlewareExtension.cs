@@ -2,7 +2,7 @@ namespace TaskFlow.ApiGateway.Extensions;
 
 using Middleware;
 
-public static class GlobalExceptionMiddlewareExtensions
+public static class GlobalExceptionMiddlewareExtension
 {
 
     #region Methods

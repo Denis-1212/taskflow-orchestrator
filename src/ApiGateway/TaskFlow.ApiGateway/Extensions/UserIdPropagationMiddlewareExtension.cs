@@ -1,6 +1,8 @@
-namespace TaskFlow.ApiGateway.Gateway.Middleware;
+namespace TaskFlow.ApiGateway.Extensions;
 
-public static class UserIdPropagationMiddlewareExtensions
+using Middleware;
+
+public static class UserIdPropagationMiddlewareExtension
 {
 
     #region Methods
