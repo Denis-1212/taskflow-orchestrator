@@ -1,6 +1,14 @@
+using System.Text;
+using System.Threading.RateLimiting;
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+
 using Serilog;
 
 using TaskFlow.ApiGateway.Extensions;
+using TaskFlow.ApiGateway.Gateway.Middleware;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -23,6 +31,16 @@ builder.Services.AddCustomAuthentication(builder.Configuration)
 
 WebApplication app = builder.Build();
 
+string wwwrootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot");
+
+app.UseStaticFiles(
+    new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(wwwrootPath)
+    });
+
+app.UseGlobalExceptionHandler();
+
 app.UseGlobalExceptionHandler();
 app.SetStaticFilesDirectory();
 app.UseHttpsRedirection();
@@ -35,7 +53,5 @@ app.UseUserIdPropagation();
 app.UseRateLimiter();
 
 app.MapHealthChecks("/health/live");
-app.MapReverseProxy();
 app.MapFallbackToFile("index.html");
-
 app.Run();
