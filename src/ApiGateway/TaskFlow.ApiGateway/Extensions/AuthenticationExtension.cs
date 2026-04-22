@@ -3,7 +3,6 @@ namespace TaskFlow.ApiGateway.Extensions;
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 
@@ -35,17 +34,15 @@ public static class AuthenticationExtensions
                     ValidIssuer = configuration["Jwt:Issuer"] ?? "TaskFlow",
                     ValidAudience = configuration["Jwt:Audience"] ?? "TaskFlow",
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ClockSkew = TimeSpan.Zero // Рекомендуется для строгой проверки
+                    ClockSkew = TimeSpan.Zero
                 };
 
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
                     {
-                        // Поддержка токена в заголовке Authorization
                         string? token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
-                        // Опционально: поддержка токена в query string (для SignalR/WebSockets)
                         if (string.IsNullOrEmpty(token) && context.Request.Query.TryGetValue("access_token", out StringValues queryToken))
                         {
                             token = queryToken;
@@ -80,14 +77,6 @@ public static class AuthenticationExtensions
                     }
                 };
             });
-
-        // Добавляем политики авторизации
-        services.AddAuthorization(options =>
-        {
-            options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .Build();
-        });
 
         return services;
     }
