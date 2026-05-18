@@ -16,8 +16,6 @@
     <Project Path="src/Shared/TaskFlow.Shared.Grpc/TaskFlow.Shared.Grpc.csproj" />
     <Project Path="src/Shared/TaskFlow.Shared.Kernel/TaskFlow.Shared.Kernel.csproj" />
     <Project Path="src/Shared/TaskFlow.Shared.Messaging/TaskFlow.Shared.Messaging.csproj" />
-    <Project Path="src/Shared/TaskFlow.Shared.Observability/TaskFlow.Shared.Observability.csproj" />
-    <Project Path="src/Shared/TaskFlow.Shared.Resilience/TaskFlow.Shared.Resilience.csproj" />
     <Project Path="src\Shared\TaskFlow.Shared.Messaging.RabbitMQ\TaskFlow.Shared.Messaging.RabbitMQ.csproj" />
   </Folder>
   <Folder Name="/tests/" />
