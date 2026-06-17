@@ -57,9 +57,8 @@ builder.Services.AddDbContext<TaskDbContext>((sp, options) =>
 {
     options.UseNpgsql(connectionString)
         .EnableSensitiveDataLogging()
-        .LogTo(Console.WriteLine, LogLevel.Information);
-
-    options.AddInterceptors(sp.GetRequiredService<DomainEventInterceptor>());
+        .LogTo(Console.WriteLine, LogLevel.Information)
+        .AddInterceptors(new DomainEventInterceptor());
 });
 
 builder.Services.AddHostedService<OutboxProcessorService>();

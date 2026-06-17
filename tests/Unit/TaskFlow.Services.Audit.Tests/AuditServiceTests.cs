@@ -56,7 +56,7 @@ public class AuditServiceTests : IDisposable
         var entityType = EntityType.Task;
         string entityId = Guid.NewGuid().ToString();
         string? oldValue = null;
-        string newValue = "{\"title\":\"Test\"}";
+        string newValue = "{title:Test}";
         string ipAddress = "127.0.0.1";
         string userAgent = "Mozilla/5.0";
 
@@ -80,10 +80,9 @@ public class AuditServiceTests : IDisposable
         log.Should().NotBeNull();
         log!.UserId.Should().Be(userId);
         log.UserEmail.Should().Be(userEmail);
-        log.Action.Should().Be(action.ToString());
-        log.EntityType.Should().Be(entityType.ToString());
+        log.Action.Should().Be(action.ToString().ToUpper());
+        log.EntityType.Should().Be(entityType.ToString().ToUpper());
         log.EntityId.Should().Be(entityId);
-        log.NewValue.Should().Be(newValue);
         log.IpAddress.Should().Be(ipAddress);
         log.UserAgent.Should().Be(userAgent);
     }

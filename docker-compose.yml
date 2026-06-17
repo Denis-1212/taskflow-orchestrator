@@ -9,7 +9,7 @@ services:
     container_name: taskflow-auth-db
     environment:
       POSTGRES_USER: taskflow
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskflow123}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: auth_db
     ports:
       - "5432:5432"
@@ -28,7 +28,7 @@ services:
     container_name: taskflow-project-db
     environment:
       POSTGRES_USER: taskflow
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskflow123}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: project_db
     ports:
       - "5433:5432"
@@ -47,7 +47,7 @@ services:
     container_name: taskflow-task-db
     environment:
       POSTGRES_USER: taskflow
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskflow123}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: task_db
     ports:
       - "5434:5432"
@@ -66,7 +66,7 @@ services:
     container_name: taskflow-notification-db
     environment:
       POSTGRES_USER: taskflow
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskflow123}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: notification_db
     ports:
       - "5435:5432"
@@ -85,7 +85,7 @@ services:
     container_name: taskflow-audit-db
     environment:
       POSTGRES_USER: taskflow
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskflow123}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: audit_db
     ports:
       - "5436:5432"
@@ -103,7 +103,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: taskflow-redis
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-taskflow123}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     ports:
       - "6379:6379"
     volumes:
@@ -121,7 +121,7 @@ services:
     container_name: taskflow-rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: taskflow
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-taskflow123}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -217,16 +217,16 @@ services:
     container_name: taskflow-auth-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Production     
-      - ConnectionStrings__DefaultConnection=Host=auth-db;Port=5432;Database=auth_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
+      - ConnectionStrings__DefaultConnection=Host=auth-db;Port=5432;Database=auth_db;Username=taskflow;Password=${POSTGRES_PASSWORD}
       - Jwt__Secret=${JWT_SECRET}
       - Jwt__Issuer=TaskFlow
       - Jwt__Audience=TaskFlow
       - Jwt__AccessTokenExpirationMinutes=3
-      - ConnectionStrings__Redis=redis,password=${REDIS_PASSWORD:-taskflow123}
+      - ConnectionStrings__Redis=redis,password=${REDIS_PASSWORD}
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__Username=taskflow
-      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-taskflow123}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
       - RabbitMQ__VirtualHost=/
       - Ports__Rest=5001
       - Ports__Grpc=5007
@@ -249,11 +249,11 @@ services:
     container_name: taskflow-project-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Production    
-      - ConnectionStrings__DefaultConnection=Host=project-db;Port=5432;Database=project_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
+      - ConnectionStrings__DefaultConnection=Host=project-db;Port=5432;Database=project_db;Username=taskflow;Password=${POSTGRES_PASSWORD}
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__Username=taskflow
-      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-taskflow123}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
       - RabbitMQ__VirtualHost=/    
       - Ports__Rest=5002
       - Ports__Grpc=5006
@@ -275,11 +275,11 @@ services:
     container_name: taskflow-task-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=task-db;Port=5432;Database=task_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
+      - ConnectionStrings__DefaultConnection=Host=task-db;Port=5432;Database=task_db;Username=taskflow;Password=${POSTGRES_PASSWORD}
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__Username=taskflow
-      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-taskflow123}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
       - RabbitMQ__VirtualHost=/
       - Ports__Rest=5003
       - Grpc__ProjectService__Url=http://project-service:5006
@@ -301,11 +301,11 @@ services:
     container_name: taskflow-notification-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=notification-db;Port=5432;Database=notification_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
+      - ConnectionStrings__DefaultConnection=Host=notification-db;Port=5432;Database=notification_db;Username=taskflow;Password=${POSTGRES_PASSWORD}
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__Username=taskflow
-      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-taskflow123}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
       - RabbitMQ__VirtualHost=/
       - Ports__Rest=5004
     ports:
@@ -325,11 +325,11 @@ services:
     container_name: taskflow-audit-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=audit-db;Port=5432;Database=audit_db;Username=taskflow;Password=${POSTGRES_PASSWORD:-taskflow123}
+      - ConnectionStrings__DefaultConnection=Host=audit-db;Port=5432;Database=audit_db;Username=taskflow;Password=${POSTGRES_PASSWORD}
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__Username=taskflow
-      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-taskflow123}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
       - RabbitMQ__VirtualHost=/
       - Ports__Rest=5005
     ports:

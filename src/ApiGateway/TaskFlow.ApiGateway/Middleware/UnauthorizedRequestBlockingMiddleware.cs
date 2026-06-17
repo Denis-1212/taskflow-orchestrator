@@ -25,7 +25,7 @@ public class UnauthorizedRequestBlockingMiddleware(RequestDelegate next, ILogger
         bool isAuthenticated = context.User.Identity?.IsAuthenticated ?? false;
         string path = context.Request.Path.Value ?? "";
 
-        bool isPublicAuthRequest = _publicAuthPaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+        bool isPublicAuthRequest = _publicAuthPaths.Any(p => p.Equals(path, StringComparison.OrdinalIgnoreCase));
 
         if (isPublicAuthRequest)
         {

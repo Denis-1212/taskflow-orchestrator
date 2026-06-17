@@ -13,6 +13,7 @@ obj/
 [Rr]elease/
 [Bb]in/
 [Oo]bj/
+wwwroot/
 
 # Environment files
 .env
