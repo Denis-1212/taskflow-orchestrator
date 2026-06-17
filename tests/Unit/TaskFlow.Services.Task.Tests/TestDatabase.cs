@@ -1,5 +1,7 @@
 namespace TaskFlow.Services.Task.Tests;
 
+using Domain;
+
 using Infrastructure;
 
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +15,7 @@ public static class TestDatabase
     {
         DbContextOptions<TaskDbContext> options = new DbContextOptionsBuilder<TaskDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .AddInterceptors(new DomainEventInterceptor())
             .Options;
 
         return new TaskDbContext(options);

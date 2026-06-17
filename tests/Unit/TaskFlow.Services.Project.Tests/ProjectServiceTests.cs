@@ -2,6 +2,8 @@ namespace TaskFlow.Services.Project.Tests;
 
 using Application.Services;
 
+using Auth;
+
 using Clients;
 
 using Domain;
@@ -29,6 +31,7 @@ public class ProjectServiceTests : IDisposable
 
     private readonly ProjectDbContext _context;
     private readonly ProjectService _projectService;
+    private readonly Guid _memberId;
 
     #endregion
 
@@ -40,6 +43,8 @@ public class ProjectServiceTests : IDisposable
         var loggerMock = new Mock<ILogger<ProjectService>>();
         var authGrpcClientMock = new Mock<IAuthGrpcClient>();
         var publisher = new Mock<IPublisher>();
+        _memberId = Guid.NewGuid();
+        authGrpcClientMock.Setup(r => r.GetUserAsync(_memberId)).ReturnsAsync(new GetUserResponse());
         _projectService = new ProjectService(_context, authGrpcClientMock.Object, publisher.Object, loggerMock.Object);
     }
 
@@ -195,13 +200,13 @@ public class ProjectServiceTests : IDisposable
     {
         // Arrange
         var ownerId = Guid.NewGuid();
-        var newMemberId = Guid.NewGuid();
+        // var newMemberId = Guid.NewGuid();
         var project = new Project("Test", "Description", ownerId);
         _context.Projects.Add(project);
         await _context.SaveChangesAsync();
 
         // Act
-        Result result = await _projectService.AddMemberAsync(project.Id, newMemberId, "Member", ownerId);
+        Result result = await _projectService.AddMemberAsync(project.Id, _memberId, "Member", ownerId);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -211,7 +216,7 @@ public class ProjectServiceTests : IDisposable
                                       .FirstOrDefaultAsync(p => p.Id == project.Id);
 
         updatedProject!.Members.Should().HaveCount(2);
-        updatedProject.Members.Any(m => m.UserId == newMemberId).Should().BeTrue();
+        updatedProject.Members.Any(m => m.UserId == _memberId).Should().BeTrue();
     }
 
     [Fact]
